@@ -11,7 +11,7 @@ export async function api(path: string, options: RequestInit = {}, session?: Ses
     headers.set('X-CSRF-Token', session.csrfToken);
     if (session.activeOrganization) headers.set('X-Organization-Id', session.activeOrganization.id);
   }
-  const response = await fetch(path, { ...options, headers, credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
+  const response = await fetch(path, { ...options, headers, credentials: 'same-origin', cache: 'no-store', signal: options.signal ?? AbortSignal.timeout(15_000) });
   const data: unknown = await response.json();
   if (!response.ok) {
     const failure = z.object({ error: z.object({ message: z.string() }) }).safeParse(data);

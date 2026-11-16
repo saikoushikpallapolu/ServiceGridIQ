@@ -11,7 +11,7 @@ export async function editableJob(tx: Prisma.TransactionClient, organizationId: 
   const job = await tx.job.findUnique({ where: { organizationId_id: { organizationId, id: jobId } } });
   if (!job) return reject(404, 'NOT_FOUND', 'Job not found');
   if (job.version !== version) return reject(409, 'VERSION_CONFLICT', 'This job changed. Reload before saving');
-  if (!['DRAFT', 'TRIAGED', 'READY'].includes(job.status) || await tx.appointmentReservation.count({ where: { organizationId, jobId, active: true } })) return reject(409, 'JOB_LOCKED', 'Assigned jobs require the future reschedule workflow before preparation can change');
+  if (!['DRAFT', 'TRIAGED', 'READY'].includes(job.status) || await tx.appointmentReservation.count({ where: { organizationId, jobId, active: true } })) return reject(409, 'JOB_LOCKED', 'Assigned jobs require the reschedule workflow before preparation can change');
   return job;
 }
 export async function preparationChanged(tx: Prisma.TransactionClient, actor: Membership, jobId: string, action: string, details: Prisma.InputJsonObject = {}) {

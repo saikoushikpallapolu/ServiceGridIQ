@@ -4,7 +4,7 @@
 
 ServiceGrid IQ is a field-service preparation tool that helps dispatchers identify missing job information, check technician eligibility, confirm required-part readiness, and approve assignments with clear explanations. Technicians receive preparation cards and record visit outcomes, including linked follow-ups.
 
-**Status: Phase 6 local core workflow implemented; AWS staging explicitly deferred.** Company access, intake, technician eligibility, manual preparation evidence, readiness, ranking and approved assignment are implemented. Assigned technicians can acknowledge, start, record findings and close visits. Unresolved visits create linked follow-up drafts; dispatchers can cancel or reschedule before work starts. CSV onboarding/reporting and controlled-pilot operating safeguards remain later phases. Customer benefit and production readiness still need validation.
+**Status: Phase 7 local onboarding and reporting implemented; AWS staging explicitly deferred.** The core dispatcher-to-technician workflow supports intake, preparation, approved assignment, visit execution and linked follow-ups. Owners can now review and atomically commit CSVs, export records, inspect defined operational metrics and audit history. Hosted deployment, recovery, monitoring and controlled-pilot safeguards remain Phase 8. Customer benefit and production readiness still need validation.
 
 ## The problem we are testing
 
@@ -31,6 +31,8 @@ The pilot uses **timestamped manual parts confirmation**, not protected stock re
 | [Phase-wise build plan â€” Markdown](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md) Â· [PDF](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.pdf) | Detailed tasks, estimates, completion gates, and extension phases |
 | [Pilot OpenAPI contract](docs/api/ServiceGrid_IQ_Pilot_OpenAPI_v2.json) | OpenAPI 3.1 contract with 52 proposed operations; no backend implementation supplied |
 | [Phase 2 API contract](docs/api/phase-2-openapi.json) | Implemented OIDC/session, membership, invitation and audit endpoints |
+| [Phase 7 API contract](docs/api/phase-7-openapi.json) | Implemented CSV reviews/commits, exports, reporting and audit |
+| [Phase 7 walkthrough](docs/operations/phase-7-local.md) · [checklist](docs/plans/phase-7-checklist.md) | Load fictional records and inspect operational results |
 | [Phase 6 API contract](docs/api/phase-6-openapi.json) | Implemented technician visits, outcomes, follow-ups and lifecycle actions |
 | [Phase 6 walkthrough](docs/operations/phase-6-local.md) · [checklist](docs/plans/phase-6-checklist.md) | Try the complete local dispatcher-to-technician workflow |
 | [Phase 5 API contract](docs/api/phase-5-openapi.json) | Implemented preparation, live readiness, ranking and approved assignment |

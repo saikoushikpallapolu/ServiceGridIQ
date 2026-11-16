@@ -28,6 +28,8 @@ model Organization {
   jobs Job[]
   branches Branch[]
   skills Skill[]
+  importBatches ImportBatch[]
+  externalRecords ExternalRecord[]
 
   @@map("organizations")
 }
@@ -71,6 +73,8 @@ model Membership {
   idempotencies IdempotencyRecord[]
   observations VisitObservation[]
   visitClosures VisitClosure[]
+  importBatches ImportBatch[]
+  reportExclusions ReportExclusion[]
   @@unique([organizationId, userId])
   @@unique([organizationId, id])
   @@map("memberships")
@@ -172,6 +176,7 @@ model Job {
   descendants Job[] @relation("FollowUpRoot")
   observations VisitObservation[]
   closure VisitClosure?
+  reportExclusion ReportExclusion?
   complaint String
   serviceCategory String @default("GENERAL_SERVICE") @map("service_category")
   plannedStart DateTime? @map("planned_start") @db.Timestamptz(3)
@@ -205,6 +210,55 @@ model Job {
   @@index([organizationId, rootJobId])
   @@index([organizationId, equipmentId, createdAt])
   @@map("jobs")
+}
+
+model ImportBatch {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  actorMembershipId String @map("actor_membership_id") @db.Uuid
+  kind String
+  sourceSystem String @map("source_system")
+  fileHash String @map("file_hash")
+  payload Json?
+  validation Json
+  status String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  committedAt DateTime? @map("committed_at") @db.Timestamptz(3)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  actor Membership @relation(fields: [organizationId, actorMembershipId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, id])
+  @@index([expiresAt])
+  @@index([organizationId, createdAt, id])
+  @@map("import_batches")
+}
+
+model ExternalRecord {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  sourceSystem String @map("source_system")
+  kind String
+  externalId String @map("external_id")
+  internalId String @map("internal_id") @db.Uuid
+  contentHash String @map("content_hash")
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  @@unique([organizationId, sourceSystem, kind, externalId])
+  @@index([organizationId, kind, internalId])
+  @@map("external_records")
+}
+
+model ReportExclusion {
+  jobId String @id @map("job_id") @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  actorMembershipId String @map("actor_membership_id") @db.Uuid
+  reason String?
+  note String
+  version Int @default(1)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  job Job @relation(fields: [organizationId, jobId], references: [organizationId, id], onDelete: Restrict)
+  actor Membership @relation(fields: [organizationId, actorMembershipId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, jobId])
+  @@map("report_exclusions")
 }
 
 model JobEvent {

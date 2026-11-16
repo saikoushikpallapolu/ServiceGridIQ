@@ -49,7 +49,8 @@ jobs:
           node scripts/generate-phase4-contract.mjs
           node scripts/generate-phase5-contract.mjs
           node scripts/generate-phase6-contract.mjs
-          git diff --exit-code -- docs/api/phase-3-openapi.json docs/api/phase-4-openapi.json docs/api/phase-5-openapi.json docs/api/phase-6-openapi.json
+          node scripts/generate-phase7-contract.mjs
+          git diff --exit-code -- docs/api/phase-3-openapi.json docs/api/phase-4-openapi.json docs/api/phase-5-openapi.json docs/api/phase-6-openapi.json docs/api/phase-7-openapi.json
       - name: Validate Compose and run full-container smoke test
         run: |
           node scripts/setup-env.mjs

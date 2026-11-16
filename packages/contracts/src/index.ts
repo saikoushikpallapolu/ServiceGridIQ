@@ -1,5 +1,16 @@
 import { z } from 'zod';
 
+export const importKindSchema = z.enum(['customers', 'sites', 'equipment', 'technicians', 'jobs', 'parts']);
+export const importDryRunInputSchema = z.object({ kind: importKindSchema, sourceSystem: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/), csvBase64: z.string().min(4).max(6990508), mapping: z.record(z.string().min(1).max(80), z.string().min(1).max(160)).default({}) }).strict();
+export const importCommitInputSchema = z.object({ fileHash: z.string().regex(/^[a-f0-9]{64}$/) }).strict();
+export const importIssueSchema = z.object({ row: z.number().int().nonnegative(), field: z.string(), code: z.string(), message: z.string() });
+export const importValidationSchema = z.object({ valid: z.boolean(), totalRows: z.number().int(), createCount: z.number().int(), skipCount: z.number().int(), errorCount: z.number().int(), errors: z.array(importIssueSchema) });
+export const importBatchSchema = z.object({ id: z.uuid(), kind: importKindSchema, sourceSystem: z.string(), fileHash: z.string(), status: z.enum(['VALIDATED', 'INVALID', 'COMMITTED']), createdAt: z.iso.datetime(), expiresAt: z.iso.datetime(), committedAt: z.iso.datetime().nullable(), validation: importValidationSchema });
+export const reportExclusionInputSchema = z.object({ version: z.number().int().positive(), reason: z.enum(['PLANNED_MULTI_VISIT', 'DATA_QUALITY']).nullable(), note: z.string().trim().min(1).max(2000) }).strict();
+export const reportExclusionSchema = reportExclusionInputSchema.extend({ jobId: z.uuid(), note: z.string(), updatedAt: z.iso.datetime().nullable() });
+export const operationalReportSchema = z.object({ asOf: z.iso.datetime(), from: z.iso.datetime(), to: z.iso.datetime(), observationDays: z.literal(14), initialJobs: z.number(), excludedCancelled: z.number(), excludedManual: z.number(), awaitingMaturity: z.number(), eligibleMatured: z.number(), missingOutcomes: z.number(), firstVisitCompletions: z.number(), linkedFollowUps: z.number(), firstVisitCompletionRate: z.number().nullable(), followUpRate: z.number().nullable(), preparation: z.object({ approvedJobs: z.number(), meanElapsedMinutes: z.number().nullable(), medianElapsedMinutes: z.number().nullable() }), followUpReasons: z.array(z.object({ reason: z.string(), serviceCategory: z.string(), count: z.number() })), readiness: z.object({ evaluatedJobs: z.number(), unevaluatedJobs: z.number(), gaps: z.array(z.object({ code: z.string(), severity: z.string(), count: z.number() })) }) });
+export const auditPageSchema = z.object({ items: z.array(z.object({ id: z.uuid(), actorName: z.string(), action: z.string(), targetId: z.string(), details: z.record(z.string(), z.unknown()), createdAt: z.iso.datetime() })), total: z.number(), page: z.number(), limit: z.number() });
+
 export const healthSchema = z.object({
   status: z.enum(['ok', 'degraded']),
   service: z.literal('servicegrid-api'),

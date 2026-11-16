@@ -1,0 +1,2 @@
+external_id,customer_external_id,site_external_id,equipment_external_id,complaint,service_category,priority,arrival_start,arrival_end,duration_minutes,buffer_minutes
+j-001,c-001,s-001,e-001,Fictional cooling inspection,HVAC_INSPECTION,NORMAL,2035-01-15T09:00:00+05:30,2035-01-15T12:00:00+05:30,60,30
