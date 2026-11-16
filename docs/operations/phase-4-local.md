@@ -1,5 +1,7 @@
 # Phase 4 local walkthrough
 
+Navigation: choose **Workforce** for profiles, qualifications and availability. Choose **Dispatch** to open a job and evaluate appointment eligibility. On mobile, use the workspace menu. See the [frontend navigation guide](../design/frontend-redesign.md).
+
 AWS staging remains explicitly deferred at the owner's request. Start Docker Desktop's Linux engine and use the [Phase 2 login guide](phase-2-local.md) for local passwords.
 
 ```sh

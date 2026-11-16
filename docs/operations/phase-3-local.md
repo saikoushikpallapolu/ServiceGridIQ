@@ -1,5 +1,7 @@
 # Phase 3 local walkthrough
 
+Navigation: choose **Dispatch** for the job queue, new service requests and Customers & equipment. On mobile, open the workspace menu first. See the [frontend navigation guide](../design/frontend-redesign.md).
+
 Use Docker Desktop with its Linux engine running. No AWS account is required. Follow the [Phase 2 sign-in guide](phase-2-local.md) for account setup and generated passwords.
 
 ## Start or update

@@ -1,5 +1,7 @@
 # Phase 6 local walkthrough
 
+Navigation: technicians work in **My visits**. Owners and dispatchers choose **Dispatch** to open a job and manage its visit lifecycle. On mobile, use the workspace menu. See the [frontend navigation guide](../design/frontend-redesign.md).
+
 The core service workflow now works locally. [Phase 7](phase-7-local.md) now provides imports/exports and reporting; Phase 8 establishes hosted controlled-pilot readiness. AI/manual ingestion and transactional inventory are later optional extensions. AWS account setup remains deferred.
 
 Use Docker Desktop's Linux engine and generated credentials from the [sign-in guide](phase-2-local.md).

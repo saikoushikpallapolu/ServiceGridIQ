@@ -1,5 +1,7 @@
 # Phase 9: private manuals and cited preparation
 
+Navigation: owners choose **Manuals & evidence** for uploads, review and AI usage. Cited evidence is inside jobs in **Dispatch**, or assigned technician cards in **My visits**. On mobile, use the workspace menu. See the [frontend navigation guide](../design/frontend-redesign.md).
+
 Phase 9 implements an advisory knowledge layer alongside the core workflow. AWS remains deferred. The technician experience is a responsive mobile web app, not a native or offline app. Uploaded manuals never change readiness, safety evidence, assignments or stock automatically.
 
 ## Local setup

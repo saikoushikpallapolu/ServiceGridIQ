@@ -1,5 +1,7 @@
 # Phase 10: protected stock and consumption
 
+Navigation: owners choose **Inventory** for Stock ledger and **Parts & locations** for catalog records. Job allocations appear in **Dispatch** and technician **My visits**. On mobile, use the workspace menu. See the [frontend navigation guide](../design/frontend-redesign.md).
+
 This extension replaces timestamped manual parts evidence with transactional reservations **when an owner enables LEDGER mode**. MANUAL remains the default. Earlier blueprint examples are planning material; this record and the [implemented API contract](../api/phase-10-openapi.json) describe current behavior.
 
 ## Owner: establish opening stock

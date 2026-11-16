@@ -1,5 +1,7 @@
 # Phase 5 local walkthrough
 
+Navigation: choose **Parts & locations** for the catalog, then **Dispatch** for job preparation, readiness and assignment approval. On mobile, use the workspace menu. See the [frontend navigation guide](../design/frontend-redesign.md).
+
 AWS remains deferred. Run Docker Desktop's Linux engine and use the [local sign-in guide](phase-2-local.md) for generated fictional credentials.
 
 ```sh

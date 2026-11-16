@@ -1,5 +1,7 @@
 # Phase 7 local walkthrough
 
+Navigation: owners choose **Reports & data** for CSV onboarding/exports, operational reports and audit history. On mobile, use the workspace menu. See the [frontend navigation guide](../design/frontend-redesign.md).
+
 Phase 7 adds owner onboarding, exports, operational reports and audit history to the working dispatcher/technician flow. AWS remains deferred; Phase 8 is the operational pilot gate. Use fictional data only in the development environment.
 
 ## Start the current app
