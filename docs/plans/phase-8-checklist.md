@@ -10,3 +10,5 @@
 - [ ] Named support contact, agreed pilot partner and observed shadow-mode trial.
 
 External gates remain open at the owner's earlier request to defer AWS. This phase may be committed as a local operating foundation; it is not a completed controlled-pilot deployment gate. Phases 9 and 10 are authorized extensions, not evidence that those external gates have passed. See the [runbook](../operations/phase-8-runbook.md).
+
+[Phase 8 application CI](https://github.com/saikoushikpallapolu/ServiceGridIQ/actions/runs/43931283504) passed for `6011f59`, including 138 automated tests, encrypted restore, immutable-image recreation and the isolated load workload. [Documentation checks](https://github.com/saikoushikpallapolu/ServiceGridIQ/actions/runs/43931283534) passed.
