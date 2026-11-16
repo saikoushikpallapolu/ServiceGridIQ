@@ -1,11 +1,13 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Router, type Request, type Response, type RequestHandler } from 'express';
 import { z } from 'zod';
-import type { PrismaClient, AuthSession, User, Membership } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type { Config } from '../config.js';
 import type { IdentityProvider } from './oidc.js';
 import { AuthError, reject as fail } from './errors.js';
 import { createCompanyService } from './company-service.js';
+import { createIntakeRouter } from '../intake/router.js';
+import { context, type Context } from './context.js';
 
 const uuid = z.uuid();
 const role = z.enum(['OWNER', 'DISPATCHER', 'TECHNICIAN']);
@@ -15,8 +17,6 @@ const equal = (left: string, right: string) => {
   const a = Buffer.from(left); const b = Buffer.from(right);
   return a.length === b.length && timingSafeEqual(a, b);
 };
-type Context = { session: AuthSession; user: User; membership?: Membership };
-const context = (res: Response) => res.locals.auth as Context;
 
 function cookie(req: Request, name: string) {
   const values = (req.headers.cookie ?? '').split(';').map((part) => part.trim()).filter((part) => part.startsWith(`${name}=`));
@@ -156,6 +156,7 @@ export function createAuthRouter(database: PrismaClient, config: Config, provide
   });
 
   router.use('/v1', requireTenant);
+  router.use('/v1', createIntakeRouter(database, requireCsrf));
   router.get('/v1/organizations/:organizationId', async (req, res) => {
     const membership = context(res).membership!;
     if (req.params.organizationId !== membership.organizationId) return fail(404, 'NOT_FOUND', 'Resource not found');

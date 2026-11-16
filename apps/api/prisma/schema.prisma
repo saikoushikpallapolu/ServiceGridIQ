@@ -18,6 +18,10 @@ model Organization {
   sessions AuthSession[]
   invitations Invitation[]
   auditEvents AuditEvent[]
+  customers Customer[]
+  sites ServiceSite[]
+  equipment Equipment[]
+  jobs Job[]
 
   @@map("organizations")
 }
@@ -52,9 +56,120 @@ model Membership {
   user User @relation(fields: [userId], references: [id], onDelete: Restrict)
   invitations Invitation[]
   auditEvents AuditEvent[]
+  jobEvents JobEvent[]
   @@unique([organizationId, userId])
   @@unique([organizationId, id])
   @@map("memberships")
+}
+
+enum JobStatus {
+  DRAFT
+  TRIAGED
+}
+
+enum JobPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model Customer {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  name String
+  email String?
+  phone String?
+  version Int @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  sites ServiceSite[]
+  @@unique([organizationId, id])
+  @@index([organizationId, name, id])
+  @@map("customers")
+}
+
+model ServiceSite {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  customerId String @map("customer_id") @db.Uuid
+  name String
+  address String
+  accessNotes String @default("") @map("access_notes")
+  version Int @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  customer Customer @relation(fields: [organizationId, customerId], references: [organizationId, id], onDelete: Restrict)
+  equipment Equipment[]
+  jobs Job[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, customerId, id])
+  @@index([organizationId, customerId])
+  @@map("service_sites")
+}
+
+model Equipment {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  siteId String @map("site_id") @db.Uuid
+  manufacturer String
+  model String
+  serialNumber String @map("serial_number")
+  notes String @default("")
+  version Int @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  site ServiceSite @relation(fields: [organizationId, siteId], references: [organizationId, id], onDelete: Restrict)
+  jobs Job[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, siteId, id])
+  @@index([organizationId, siteId])
+  @@map("equipment")
+}
+
+model Job {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  customerId String @map("customer_id") @db.Uuid
+  siteId String @map("site_id") @db.Uuid
+  equipmentId String @map("equipment_id") @db.Uuid
+  complaint String
+  priority JobPriority @default(NORMAL)
+  status JobStatus @default(DRAFT)
+  arrivalStart DateTime @map("arrival_start") @db.Timestamptz(3)
+  arrivalEnd DateTime @map("arrival_end") @db.Timestamptz(3)
+  estimatedDurationMinutes Int @map("estimated_duration_minutes")
+  travelBufferMinutes Int @map("travel_buffer_minutes")
+  version Int @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  site ServiceSite @relation(fields: [organizationId, customerId, siteId], references: [organizationId, customerId, id], onDelete: Restrict)
+  equipment Equipment @relation(fields: [organizationId, siteId, equipmentId], references: [organizationId, siteId, id], onDelete: Restrict)
+  events JobEvent[]
+  @@unique([organizationId, id])
+  @@index([organizationId, createdAt, id])
+  @@index([organizationId, status, priority])
+  @@index([organizationId, equipmentId, createdAt])
+  @@map("jobs")
+}
+
+model JobEvent {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  jobId String @map("job_id") @db.Uuid
+  actorMembershipId String @map("actor_membership_id") @db.Uuid
+  kind String
+  note String
+  details Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  job Job @relation(fields: [organizationId, jobId], references: [organizationId, id], onDelete: Restrict)
+  actor Membership @relation(fields: [organizationId, actorMembershipId], references: [organizationId, id], onDelete: Restrict)
+  @@index([organizationId, jobId, createdAt, id])
+  @@map("job_events")
 }
 
 model AuthSession {

@@ -6,7 +6,8 @@
 2. [Phase-wise build plan](plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md) defines sequence, estimates, and completion gates. A [formatted PDF](plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.pdf) is included.
 3. [Pilot OpenAPI contract](api/ServiceGrid_IQ_Pilot_OpenAPI_v2.json) defines the proposed pilot requests and responses.
 4. [Phase 2 authentication contract](api/phase-2-openapi.json) and [local sign-in guide](operations/phase-2-local.md) describe the implemented auth subset.
-5. [Phase 1 checklist](plans/phase-1-checklist.md) records the foundation and deferred cloud gate.
+5. [Phase 3 intake contract](api/phase-3-openapi.json), [walkthrough](operations/phase-3-local.md) and [design](architecture/0003-service-intake.md) describe customer-to-job intake.
+6. [Phase 1 checklist](plans/phase-1-checklist.md) records the foundation and deferred cloud gate.
 
 ## Source of truth
 
@@ -16,6 +17,8 @@ Markdown files are editable document sources. Refresh their PDF companions and i
 
 ## Status
 
-The repository now includes the Phase 1 frontend, health API, PostgreSQL foundation migration and seeds, local Docker services, CI, and AWS staging templates. Phase 2 adds local OIDC authentication, server-side sessions, company selection, roles, invitations and audit. The pilot business APIs are not implemented. The pilot OpenAPI file remains a future contract; the implemented authentication subset has its own contract. The owner explicitly deferred AWS staging to continue Phase 2 locally. See [local setup](operations/local-development.md), [AWS setup](operations/aws-staging.md), and [accepted decisions](architecture/0001-phase-1-foundation.md).
+The repository now includes the Phase 1 frontend, health API, PostgreSQL foundation migration and seeds, local Docker services, CI, and AWS staging templates. Phase 2 adds local OIDC authentication, server-side sessions, company selection, roles, invitations and audit. Phase 3 implements customer/site/equipment records and versioned draft intake, job filtering, triage, timeline and equipment history. Scheduling and later pilot modules remain planned. The pilot OpenAPI file remains a future contract; the implemented authentication subset has its own contract. The owner explicitly deferred AWS staging to continue local development through Phase 3. See [local setup](operations/local-development.md), [AWS setup](operations/aws-staging.md), and [accepted decisions](architecture/0001-phase-1-foundation.md).
 
 The [Phase 2 checklist](plans/phase-2-checklist.md) tracks current authentication completion.
+
+The [Phase 3 checklist](plans/phase-3-checklist.md) tracks intake completion and its separate staging gate.

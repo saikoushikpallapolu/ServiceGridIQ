@@ -37,6 +37,8 @@ test('technician sees only their company and cannot use owner endpoints on mobil
   await page.getByRole('button', { name: /Fictional Cooling Alpha/ }).click();
   await expect(page.getByText('TECHNICIAN', { exact: true })).toBeVisible();
   expect((await page.request.get('/api/v1/audit-events', { headers: { 'X-Organization-Id': alpha } })).status()).toBe(403);
+  await expect(page.getByRole('heading', { name: 'Dispatch workspace' })).toHaveCount(0);
+  expect((await page.request.get('/api/v1/jobs', { headers: { 'X-Organization-Id': alpha } })).status()).toBe(403);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 

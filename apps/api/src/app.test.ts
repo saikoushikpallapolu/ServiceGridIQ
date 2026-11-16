@@ -4,6 +4,13 @@ import { createApp } from './app.js';
 import { Router } from 'express';
 
 describe('health boundaries', () => {
+  it('limits login attempts separately from normal workspace requests', async () => {
+    const routes = Router(); routes.get('/auth/login', (_req, res) => { res.sendStatus(204); });
+    const app = createApp({ checkDatabase: async () => {}, logLevel: 'silent', authRouter: routes });
+    for (let attempt = 0; attempt < 20; attempt++) await request(app).get('/api/auth/login').expect(204);
+    await request(app).get('/api/auth/login').expect(429);
+    await request(app).get('/health/live').expect(200);
+  });
   it('remains live when the database is down and hides dependency errors', async () => {
     const app = createApp({ checkDatabase: async () => { throw new Error('secret-password'); }, logLevel: 'silent' });
     const live = await request(app).get('/health/live').expect(200);

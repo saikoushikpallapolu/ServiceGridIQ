@@ -43,6 +43,10 @@ jobs:
       - run: pnpm db:seed
       - run: pnpm test:integration
       - run: pnpm check:docs
+      - name: Verify generated intake contract
+        run: |
+          node scripts/generate-phase3-contract.mjs
+          git diff --exit-code -- docs/api/phase-3-openapi.json
       - name: Validate Compose and run full-container smoke test
         run: |
           node scripts/setup-env.mjs

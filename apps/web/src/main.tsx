@@ -3,25 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { z } from 'zod';
 import { healthSchema, sessionSchema, organizationSchema, membershipSchema, type Session, type Organization, type Membership, type Health } from '@servicegrid/contracts';
 import './styles.css';
+import { api, ApiError } from './api';
+import { Intake } from './Intake';
 
-class ApiError extends Error {
-  constructor(public status: number, message: string) { super(message); }
-}
-async function api(path: string, options: RequestInit = {}, session?: Session | null): Promise<unknown> {
-  const headers = new Headers(options.headers);
-  if (options.body) headers.set('Content-Type', 'application/json');
-  if (session) {
-    headers.set('X-CSRF-Token', session.csrfToken);
-    if (session.activeOrganization) headers.set('X-Organization-Id', session.activeOrganization.id);
-  }
-  const response = await fetch(path, { ...options, headers, credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
-  const data: unknown = await response.json();
-  if (!response.ok) {
-    const failure = z.object({ error: z.object({ message: z.string() }) }).safeParse(data);
-    throw new ApiError(response.status, failure.success ? failure.data.error.message : 'The request could not be completed');
-  }
-  return data;
-}
 const authConfigSchema = z.object({ enabled: z.boolean(), mode: z.string(), loginUrl: z.url() });
 const auditSchema = z.object({ items: z.array(z.object({ id: z.uuid(), action: z.string(), targetId: z.string(), createdAt: z.iso.datetime() })) });
 type Audit = z.infer<typeof auditSchema>['items'];
@@ -112,7 +96,7 @@ function App() {
   }
   const company = session?.activeOrganization;
   return <div className="shell">
-    <aside><a className="brand" href="/" aria-label="ServiceGrid IQ home"><span className="brand-icon">S</span><span>ServiceGrid <b>IQ</b></span></a><span className="workspace-label">YOUR WORKSPACE</span><div className="nav-active"><span aria-hidden="true">◈</span> Company access</div><p className="aside-note">Prepare the visit.<br />Make every dispatch count.</p><div className="phase-tag">Secure company workspaces</div></aside>
+    <aside><a className="brand" href="/" aria-label="ServiceGrid IQ home"><span className="brand-icon">S</span><span>ServiceGrid <b>IQ</b></span></a><span className="workspace-label">YOUR WORKSPACE</span><div className="nav-active"><span aria-hidden="true">◈</span> Company workspace</div><p className="aside-note">Prepare the visit.<br />Make every dispatch count.</p><div className="phase-tag">Service intake & team access</div></aside>
     <main>
       <header><span>Workspace / {company?.name ?? 'Welcome'}</span><div className="header-actions">{session ? <><span>{session.user.name}</span><button onClick={signOut} disabled={busy}>Sign out</button></> : <span className="environment">Development workspace</span>}</div></header>
       {loading ? <p className="feedback" role="status">Opening your workspace…</p> : <>
@@ -122,18 +106,19 @@ function App() {
         {!session ? <section className="status-panel signin-panel"><p className="eyebrow">WELCOME TO SERVICEGRID IQ</p><h2>Sign in to your workspace</h2><p className="lede">Use your company account to continue.</p>{config?.enabled ? <a className="primary-button" href={config.loginUrl}>Sign in</a> : <p>Sign-in is not configured for this environment.</p>}</section> : <>
           {pendingInvite && <section className="status-panel invitation-panel"><h2>You have a company invitation</h2><p>Accept using the email address the invitation was sent to.</p><button disabled={busy} onClick={() => void action(async () => { await api('/api/v1/invitations/accept', { method: 'POST', body: JSON.stringify({ token: pendingInvite }) }, session); sessionStorage.removeItem('pendingInvitation'); setPendingInvite(''); await load(); setMessage('Invitation accepted. Select your company below.'); })}>Accept invitation</button></section>}
           <section className="status-panel" aria-labelledby="company-title"><div className="panel-heading"><div><p className="eyebrow">COMPANY SELECTION</p><h2 id="company-title">Where are you working today?</h2></div></div>{organizations.length ? <div className="company-grid">{organizations.map((organization) => <button key={organization.id} disabled={busy} aria-pressed={company?.id === organization.id} className={`company-card ${company?.id === organization.id ? 'selected' : ''}`} onClick={() => selectOrganization(organization.id)}><strong>{organization.name}</strong><span>{organization.role.toLowerCase()}</span><small>{company?.id === organization.id ? 'Active workspace' : 'Open workspace →'}</small></button>)}</div> : <p>No company access has been assigned yet. Ask your company owner for an invitation.</p>}</section>
-          {company && <section className="workspace-summary"><span className="role-badge">{company.role}</span><h2>{company.name}</h2><p>{company.role === 'OWNER' ? 'You can manage team access and review access changes.' : 'Your company workspace is ready. Service intake and assigned-job tools arrive in the next phases.'}</p></section>}
+          {company && <section className="workspace-summary"><span className="role-badge">{company.role}</span><h2>{company.name}</h2><p>{company.role === 'OWNER' ? 'You can manage intake, team access and review company changes.' : 'Your company workspace is ready. Dispatchers can manage intake; assigned-job tools arrive in a later phase.'}</p></section>}
+          {company && company.role !== 'TECHNICIAN' && <Intake key={company.id} session={session!} />}
           {company?.role === 'OWNER' && <>
             <section className="status-panel team-panel"><div className="panel-heading"><div><p className="eyebrow">TEAM ACCESS</p><h2>People in this company</h2></div></div>
               <div className="team-list">{members.map((member) => <article className="member-row" key={member.id}><div><strong>{member.name}</strong><span>{member.email}</span><small>{member.active ? 'Active' : 'Access disabled'}</small></div><div className="member-actions"><select aria-label={`Role for ${member.email}`} value={member.role} disabled={busy} onChange={(event) => updateMember(member, { role: event.target.value as Membership['role'] })}><option value="OWNER">Owner</option><option value="DISPATCHER">Dispatcher</option><option value="TECHNICIAN">Technician</option></select><button disabled={busy} onClick={() => { if (window.confirm(`${member.active ? 'Disable' : 'Enable'} access for ${member.name}?`)) updateMember(member, { active: !member.active }); }}>{member.active ? 'Disable access' : 'Enable access'}</button></div></article>)}</div>
               <form className="invite-form" onSubmit={invite}><h3>Invite someone</h3><div className="form-row"><label>Email address<input name="email" type="email" required placeholder="name@company.com" /></label><label>Role<select name="role" defaultValue="TECHNICIAN"><option value="TECHNICIAN">Technician</option><option value="DISPATCHER">Dispatcher</option><option value="OWNER">Owner</option></select></label><button type="submit" disabled={busy}>Create invitation</button></div></form>
               {inviteUrl && <div className="invite-result"><label>Invitation link<input aria-label="Invitation link" readOnly value={inviteUrl} /></label><button onClick={() => void navigator.clipboard.writeText(inviteUrl).then(() => setMessage('Invitation link copied.')).catch(() => setError('Select and copy the invitation link.'))}>Copy link</button></div>}
             </section>
-            <section className="status-panel audit-panel"><p className="eyebrow">RECENT ACCESS CHANGES</p><h2>Company activity</h2><ul>{audit.slice(0, 10).map((event) => <li key={event.id}><span>{event.action.toLowerCase().replaceAll('_', ' ')}</span><time dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleString()}</time></li>)}</ul></section>
+            <section className="status-panel audit-panel"><p className="eyebrow">RECENT COMPANY CHANGES</p><h2>Company activity</h2><ul>{audit.slice(0, 10).map((event) => <li key={event.id}><span>{event.action.toLowerCase().replaceAll('_', ' ')}</span><time dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleString()}</time></li>)}</ul></section>
           </>}
         </>}
         <section className="next-section"><div><p className="eyebrow">CONNECTION STATUS</p><h2>Application foundation</h2></div><p>{health ? `API ${health.status === 'ok' ? 'connected' : 'degraded'} · Database ${health.checks.database}` : 'Check the current application and database connection.'}</p><button disabled={busy} onClick={() => void action(async () => { const response = await fetch('/health/ready', { signal: AbortSignal.timeout(6000) }); setHealth(healthSchema.parse(await response.json())); })}>Check connection</button></section>
-        <footer>ServiceGrid IQ <span>Company access is available. Dispatch features are still in development.</span></footer>
+        <footer>ServiceGrid IQ <span>Service intake is available. Scheduling and assignment are still in development.</span></footer>
       </>}
     </main>
   </div>;

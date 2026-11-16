@@ -4,7 +4,7 @@
 
 ServiceGrid IQ is a planned field-service preparation tool that helps dispatchers identify missing job information, check technician eligibility, confirm required-part readiness, and approve assignments with clear explanations. Technicians will receive preparation cards and record visit outcomes, including linked follow-ups.
 
-**Status: Phase 2 local authentication and company isolation implemented; AWS staging explicitly deferred.** Sign-in/sign-out, company selection, owner-managed roles, private invitations, and access audit are implemented. Service intake and dispatch remain planned. No production identity deployment or customer outcome claims are made.
+**Status: Phase 3 local service intake implemented; AWS staging explicitly deferred.** Sign-in/sign-out, company selection, roles, invitations, customer/site/equipment records, draft intake, the filtered job queue, triage and job history are implemented. Scheduling and assignment remain planned. No production identity deployment or customer outcome claims are made.
 
 ## The problem we are testing
 
@@ -31,6 +31,9 @@ The pilot uses **timestamped manual parts confirmation**, not protected stock re
 | [Phase-wise build plan — Markdown](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md) · [PDF](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.pdf) | Detailed tasks, estimates, completion gates, and extension phases |
 | [Pilot OpenAPI contract](docs/api/ServiceGrid_IQ_Pilot_OpenAPI_v2.json) | OpenAPI 3.1 contract with 52 proposed operations; no backend implementation supplied |
 | [Phase 2 API contract](docs/api/phase-2-openapi.json) | Implemented OIDC/session, membership, invitation and audit endpoints |
+| [Phase 3 API contract](docs/api/phase-3-openapi.json) | Implemented customer, site, equipment and job-intake endpoints |
+| [Phase 3 checklist](docs/plans/phase-3-checklist.md) | Local completion evidence and remaining deployment gate |
+| [Phase 3 walkthrough](docs/operations/phase-3-local.md) | Try customer-to-job intake, triage and edit conflicts |
 | [Phase 2 checklist](docs/plans/phase-2-checklist.md) | Local completion evidence and deferred deployment boundaries |
 | [Phase 1 checklist](docs/plans/phase-1-checklist.md) | Immediate implementation tasks and completion evidence |
 | [Documentation index](docs/README.md) | Reading order and source-of-truth rules |
@@ -54,8 +57,8 @@ Node.js 24.19.0 and pnpm 11.25.0 are pinned. Prisma 7.10.1 and PostgreSQL 17 are
 
 ```text
 apps/
-  web/                  # React foundation; manager and technician features planned
-  api/                  # Express health API; business modules planned
+  web/                  # React company access and dispatcher intake; technician workflow planned
+  api/                  # Express health, identity, tenant and intake APIs
   worker/               # Reserved for later asynchronous processing
 packages/
   contracts/            # Shared runtime schemas and TypeScript types
@@ -91,7 +94,7 @@ Open [http://localhost:8080](http://localhost:8080). Docker Desktop must be runn
 
 The documentation check requires Node.js 22 or later and no package installation. It checks required files, local Markdown links, JSON parsing, local OpenAPI references, and operation IDs. It is not a full OpenAPI validator or application test suite.
 
-Track remaining deployment evidence in the [Phase 1 checklist](docs/plans/phase-1-checklist.md) and [Phase 2 checklist](docs/plans/phase-2-checklist.md). CI builds, checks types/lint, runs unit and PostgreSQL integration tests, smoke-tests the Docker stack, and runs real OIDC browser checks. AWS release is a separate manual workflow requiring account configuration and approval.
+Track remaining deployment evidence in the [Phase 1 checklist](docs/plans/phase-1-checklist.md) , [Phase 2 checklist](docs/plans/phase-2-checklist.md) and [Phase 3 checklist](docs/plans/phase-3-checklist.md). CI builds, checks types/lint, runs unit and PostgreSQL integration tests, smoke-tests the Docker stack, and runs real OIDC browser checks. AWS release is a separate manual workflow requiring account configuration and approval.
 
 ## Delivery plan
 
