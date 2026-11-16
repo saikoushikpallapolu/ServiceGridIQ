@@ -22,3 +22,5 @@ The repository now includes the Phase 1 frontend, health API, PostgreSQL foundat
 The [Phase 2 checklist](plans/phase-2-checklist.md) tracks current authentication completion.
 
 The [Phase 3 checklist](plans/phase-3-checklist.md) tracks intake completion and its separate staging gate.
+
+Phase 4 adds [technician skills and availability](architecture/0004-scheduling-foundation.md), an [implemented API contract](api/phase-4-openapi.json) and a [local walkthrough](operations/phase-4-local.md). The owner explicitly deferred AWS again to continue locally; the previous recommendation to deploy before Phase 4 is superseded.

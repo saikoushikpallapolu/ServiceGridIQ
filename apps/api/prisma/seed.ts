@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { createDatabase } from '../src/database.js';
+import { seedScheduling } from './seed-scheduling.js';
 
 if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
 const database = createDatabase(process.env.DATABASE_URL);
@@ -41,7 +42,8 @@ try {
         await database.jobEvent.create({ data: { organizationId, jobId, actorMembershipId: owner.id, kind: 'DEMO_SEEDED', note: 'Fictional demonstration intake seeded by local setup.', details: { source: 'local-seed' } } });
       }
     }
-    console.log('Local-only fictional identities and memberships seeded. Existing roles/revocations were preserved.');
+    await seedScheduling(database, [alpha, beta]);
+    console.log('Local-only fictional identities, intake and scheduling seeded. Existing edits and revocations were preserved.');
   }
   console.log('Two fictional organizations seeded. No public organization API is enabled.');
 } finally { await database.$disconnect(); }

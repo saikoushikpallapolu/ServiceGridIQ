@@ -22,6 +22,8 @@ model Organization {
   sites ServiceSite[]
   equipment Equipment[]
   jobs Job[]
+  branches Branch[]
+  skills Skill[]
 
   @@map("organizations")
 }
@@ -57,6 +59,8 @@ model Membership {
   invitations Invitation[]
   auditEvents AuditEvent[]
   jobEvents JobEvent[]
+  technician Technician?
+  verifiedSkills TechnicianSkill[] @relation("SkillVerifier")
   @@unique([organizationId, userId])
   @@unique([organizationId, id])
   @@map("memberships")
@@ -150,6 +154,8 @@ model Job {
   site ServiceSite @relation(fields: [organizationId, customerId, siteId], references: [organizationId, customerId, id], onDelete: Restrict)
   equipment Equipment @relation(fields: [organizationId, siteId, equipmentId], references: [organizationId, siteId, id], onDelete: Restrict)
   events JobEvent[]
+  scheduling JobScheduling?
+  reservations AppointmentReservation[]
   @@unique([organizationId, id])
   @@index([organizationId, createdAt, id])
   @@index([organizationId, status, priority])
@@ -223,4 +229,127 @@ model AuditEvent {
   actor Membership @relation(fields: [organizationId, actorMembershipId], references: [organizationId, id], onDelete: Restrict)
   @@index([organizationId, createdAt, id])
   @@map("audit_events")
+}
+
+model Branch {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  name String
+  nameKey String @map("name_key")
+  address String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  technicians Technician[]
+  policies JobScheduling[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, nameKey])
+  @@map("branches")
+}
+
+model Skill {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  name String
+  nameKey String @map("name_key")
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  technicians TechnicianSkill[]
+  requirements JobSkillRequirement[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, nameKey])
+  @@map("skills")
+}
+
+model Technician {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  membershipId String @unique @map("membership_id") @db.Uuid
+  branchId String @map("branch_id") @db.Uuid
+  active Boolean @default(true)
+  safetyRestricted Boolean @default(false) @map("safety_restricted")
+  version Int @default(1)
+  membership Membership @relation(fields: [organizationId, membershipId], references: [organizationId, id], onDelete: Restrict)
+  branch Branch @relation(fields: [organizationId, branchId], references: [organizationId, id], onDelete: Restrict)
+  skills TechnicianSkill[]
+  availability Availability[]
+  reservations AppointmentReservation[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, membershipId])
+  @@map("technicians")
+}
+
+model TechnicianSkill {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  technicianId String @map("technician_id") @db.Uuid
+  skillId String @map("skill_id") @db.Uuid
+  level Int
+  active Boolean @default(true)
+  expiresAt DateTime? @map("expires_at") @db.Timestamptz(3)
+  verifiedAt DateTime @default(now()) @map("verified_at") @db.Timestamptz(3)
+  verifiedByMembershipId String @map("verified_by_membership_id") @db.Uuid
+  evidence String
+  technician Technician @relation(fields: [organizationId, technicianId], references: [organizationId, id], onDelete: Restrict)
+  skill Skill @relation(fields: [organizationId, skillId], references: [organizationId, id], onDelete: Restrict)
+  verifier Membership @relation("SkillVerifier", fields: [organizationId, verifiedByMembershipId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, technicianId, skillId])
+  @@map("technician_skills")
+}
+
+enum AvailabilityKind {
+  SHIFT
+  UNAVAILABLE
+}
+
+model Availability {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  technicianId String @map("technician_id") @db.Uuid
+  kind AvailabilityKind
+  startsAt DateTime @map("starts_at") @db.Timestamptz(3)
+  endsAt DateTime @map("ends_at") @db.Timestamptz(3)
+  reason String
+  technician Technician @relation(fields: [organizationId, technicianId], references: [organizationId, id], onDelete: Restrict)
+  @@index([organizationId, technicianId, startsAt])
+  @@map("availability")
+}
+
+model JobScheduling {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  jobId String @unique @map("job_id") @db.Uuid
+  branchId String @map("branch_id") @db.Uuid
+  allowCrossBranch Boolean @default(false) @map("allow_cross_branch")
+  generalInspection Boolean @default(false) @map("general_inspection")
+  job Job @relation(fields: [organizationId, jobId], references: [organizationId, id], onDelete: Restrict)
+  branch Branch @relation(fields: [organizationId, branchId], references: [organizationId, id], onDelete: Restrict)
+  requirements JobSkillRequirement[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, jobId])
+  @@map("job_scheduling")
+}
+
+model JobSkillRequirement {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  schedulingId String @map("scheduling_id") @db.Uuid
+  skillId String @map("skill_id") @db.Uuid
+  level Int
+  scheduling JobScheduling @relation(fields: [organizationId, schedulingId], references: [organizationId, id], onDelete: Restrict)
+  skill Skill @relation(fields: [organizationId, skillId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, schedulingId, skillId])
+  @@map("job_skill_requirements")
+}
+
+model AppointmentReservation {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  technicianId String @map("technician_id") @db.Uuid
+  jobId String @map("job_id") @db.Uuid
+  active Boolean @default(true)
+  reservedFrom DateTime @map("reserved_from") @db.Timestamptz(3)
+  plannedStart DateTime @map("planned_start") @db.Timestamptz(3)
+  endsAt DateTime @map("ends_at") @db.Timestamptz(3)
+  technician Technician @relation(fields: [organizationId, technicianId], references: [organizationId, id], onDelete: Restrict)
+  job Job @relation(fields: [organizationId, jobId], references: [organizationId, id], onDelete: Restrict)
+  @@index([organizationId, technicianId, reservedFrom])
+  @@map("appointment_reservations")
 }

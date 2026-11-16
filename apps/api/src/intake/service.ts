@@ -39,6 +39,7 @@ export function createJobService(database: PrismaClient) {
       const job = await tx.job.findUnique({ where: { organizationId_id: { organizationId: actor.organizationId, id } } });
       if (!job) return reject(404, 'NOT_FOUND', 'Job not found');
       if (job.version !== version) return reject(409, 'VERSION_CONFLICT', 'This job changed. Reload it before saving');
+      if (await tx.appointmentReservation.count({ where: { organizationId: actor.organizationId, jobId: id, active: true } })) return reject(409, 'ACTIVE_RESERVATIONS', 'Release the reservation before changing this job');
       if (job.status !== 'DRAFT') return reject(409, 'INVALID_TRANSITION', 'Return the job to draft before editing');
       await checkJobReferences(tx, actor.organizationId, input);
       const changedFields = Object.keys(input).filter((key) => {
@@ -54,6 +55,7 @@ export function createJobService(database: PrismaClient) {
       const job = await tx.job.findUnique({ where: { organizationId_id: { organizationId: actor.organizationId, id } } });
       if (!job) return reject(404, 'NOT_FOUND', 'Job not found');
       if (job.version !== version) return reject(409, 'VERSION_CONFLICT', 'This job changed. Reload it before saving');
+      if (await tx.appointmentReservation.count({ where: { organizationId: actor.organizationId, jobId: id, active: true } })) return reject(409, 'ACTIVE_RESERVATIONS', 'Release the reservation before changing this job');
       if (job.status === status || (status === 'DRAFT' && !reason)) return reject(409, 'INVALID_TRANSITION', 'Choose a different state and give a reason when returning to draft');
       if (status === 'TRIAGED') await checkJobReferences(tx, actor.organizationId, { ...job, arrivalStart: job.arrivalStart.toISOString(), arrivalEnd: job.arrivalEnd.toISOString() });
       const updated = await tx.job.update({ where: { organizationId_id: { organizationId: actor.organizationId, id }, version }, data: { status, version: { increment: 1 } } });

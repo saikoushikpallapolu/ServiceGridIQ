@@ -9,7 +9,7 @@ This phase builds local customer-to-job intake on the audited Phase 2 authentica
 - Composite foreign keys enforce the company/customer/site/equipment chain, including for direct SQL writes. IDs and organization headers supplied by a browser never determine authorization independently of the session.
 - Site ownership and equipment location are immutable in this phase. There is no delete operation. Explicit relocation, archival and historical snapshots require later design; current job details show the latest master-record values.
 - Mutations require exact-origin CSRF checks. Within a transaction, the service locks the company and rechecks current membership, user and company status before writing. This uses the same lock as owner role changes. Company-level serialization is deliberately simple for the local pilot; measure contention before scaling it.
-- The local API allows 300 general requests per minute and 20 login starts per minute per observed client IP. Limits are process-local; behind the current local Nginx proxy clients share a bucket. Trusted-proxy configuration, distributed limits and real traffic budgets must be reviewed for hosted deployment.
+- Phase 3 initially used a shared observed-IP workspace rate limit. Phase 4 replaces it with verified-user buckets and a separate IP ceiling; see [the current scheduling decision](0004-scheduling-foundation.md). Trusted-proxy configuration and distributed limits still require hosted-deployment review.
 
 ## Intake semantics
 

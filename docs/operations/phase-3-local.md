@@ -44,4 +44,4 @@ Integration tests use temporary company fixtures in the migrated database. Brows
 
 ## Next deployment gate
 
-AWS staging remains deferred for this phase. Before Phase 4, agree the AWS region and budget, establish account access, deploy staging with HTTPS and a suitable identity configuration, then verify deployment and recovery separately. Do not publish the local development Keycloak container or credential files.
+AWS staging remains deferred for this phase. The earlier recommendation to deploy before Phase 4 was explicitly superseded by the owner on 16 November 2026 to continue locally. Before hosted/client use, agree the AWS region and budget, establish account access, deploy staging with HTTPS and suitable identity configuration, then verify deployment and recovery separately. Do not publish the local development Keycloak container or credential files.

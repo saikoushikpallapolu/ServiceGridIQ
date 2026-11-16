@@ -1,12 +1,14 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { Router, type Request, type Response, type RequestHandler } from 'express';
 import { z } from 'zod';
+import { rateLimit } from 'express-rate-limit';
 import type { PrismaClient } from '@prisma/client';
 import type { Config } from '../config.js';
 import type { IdentityProvider } from './oidc.js';
 import { AuthError, reject as fail } from './errors.js';
 import { createCompanyService } from './company-service.js';
 import { createIntakeRouter } from '../intake/router.js';
+import { createSchedulingRouter } from '../scheduling/router.js';
 import { context, type Context } from './context.js';
 
 const uuid = z.uuid();
@@ -57,6 +59,10 @@ export function createAuthRouter(database: PrismaClient, config: Config, provide
     if (req.get('Origin') !== config.PUBLIC_ORIGIN || !equal(supplied, context(res).session.csrfToken)) return fail(403, 'CSRF_REJECTED', 'Refresh the page and try again');
     next();
   };
+  const authenticatedLimit = rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false,
+    keyGenerator: (_req, res) => context(res).user.id,
+    handler: () => fail(429, 'RATE_LIMITED', 'Too many requests. Please wait a moment'),
+  });
   const requireTenant: RequestHandler = async (req, res, next) => {
     const organizationId = req.get('X-Organization-Id');
     if (!uuid.safeParse(organizationId).success) return fail(400, 'ORGANIZATION_REQUIRED', 'Select a company');
@@ -113,13 +119,13 @@ export function createAuthRouter(database: PrismaClient, config: Config, provide
     res.redirect(config.PUBLIC_ORIGIN);
   });
 
-  router.get('/auth/session', requireSession, async (_req, res) => {
+  router.get('/auth/session', requireSession, authenticatedLimit, async (_req, res) => {
     const { session, user } = context(res);
     const membership = session.activeOrganizationId ? await database.membership.findFirst({ where: { organizationId: session.activeOrganizationId, userId: user.id, active: true, organization: { active: true } }, include: { organization: true } }) : null;
     res.json({ user: { id: user.id, email: user.email, name: user.name }, csrfToken: session.csrfToken, expiresAt: session.expiresAt,
       activeOrganization: membership ? { id: membership.organization.id, name: membership.organization.name, role: membership.role } : null });
   });
-  router.post('/auth/logout', requireSession, requireCsrf, async (_req, res) => {
+  router.post('/auth/logout', requireSession, authenticatedLimit, requireCsrf, async (_req, res) => {
     await database.authSession.deleteMany({ where: { tokenHash: context(res).session.tokenHash } });
     clearSessionCookie(res);
     let logoutUrl = config.PUBLIC_ORIGIN;
@@ -127,7 +133,7 @@ export function createAuthRouter(database: PrismaClient, config: Config, provide
     res.json({ logoutUrl });
   });
 
-  router.use('/v1', requireSession);
+  router.use('/v1', requireSession, authenticatedLimit);
   router.get('/v1/me/organizations', async (_req, res) => {
     const memberships = await database.membership.findMany({ where: { userId: context(res).user.id, active: true, organization: { active: true } }, include: { organization: true }, orderBy: { organization: { name: 'asc' } } });
     res.json({ items: memberships.map((item) => ({ id: item.organization.id, name: item.organization.name, timezone: item.organization.timezone, role: item.role })) });
@@ -156,6 +162,7 @@ export function createAuthRouter(database: PrismaClient, config: Config, provide
   });
 
   router.use('/v1', requireTenant);
+  router.use('/v1', createSchedulingRouter(database, requireCsrf));
   router.use('/v1', createIntakeRouter(database, requireCsrf));
   router.get('/v1/organizations/:organizationId', async (req, res) => {
     const membership = context(res).membership!;

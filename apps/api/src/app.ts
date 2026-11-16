@@ -25,7 +25,7 @@ export function createApp(options: { checkDatabase: () => Promise<void>; logLeve
   app.use(express.json({ limit: '32kb' }));
   const tooMany: express.RequestHandler = (req, res) => { res.status(429).json({ error: { code: 'RATE_LIMITED', message: 'Too many requests', traceId: String(req.id) } }); };
   app.use('/api/auth/login', rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false, handler: tooMany }));
-  app.use('/api', rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: 'draft-8', legacyHeaders: false,
+  app.use('/api', rateLimit({ windowMs: 60_000, limit: 1000, standardHeaders: 'draft-8', legacyHeaders: false,
     handler: tooMany,
   }));
 
