@@ -1,0 +1,18 @@
+# Documentation
+
+## Reading order
+
+1. [Current build blueprint](architecture/ServiceGrid_IQ_Build_Blueprint_v2.md) defines product boundaries and engineering policies. A [formatted PDF](architecture/ServiceGrid_IQ_Build_Blueprint_v2.pdf) is included.
+2. [Phase-wise build plan](plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md) defines sequence, estimates, and completion gates. A [formatted PDF](plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.pdf) is included.
+3. [Pilot OpenAPI contract](api/ServiceGrid_IQ_Pilot_OpenAPI_v2.json) defines the proposed pilot requests and responses.
+4. [Phase 1 checklist](plans/phase-1-checklist.md) defines the immediate work.
+
+## Source of truth
+
+The v2 blueprint supersedes the [original v1 blueprint](archive/ServiceGrid_IQ_Product_and_Engineering_Blueprint.pdf). Keep archived material for provenance, not as competing implementation instructions. Versioned decisions may refine the baseline; update affected contracts and acceptance criteria together.
+
+Markdown files are editable document sources. Refresh their PDF companions and inspect the pages when their content changes. The initial phase-plan schedule is a planning baseline; record actual completion evidence in the phase checklist.
+
+## Status
+
+This repository contains planning artifacts and placeholders. Database migrations, application code, deployment configuration, recovery procedures, and application test evidence will be added as implemented. The OpenAPI file is a contract, not a running API.

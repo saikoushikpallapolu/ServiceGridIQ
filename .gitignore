@@ -1,0 +1,32 @@
+# Dependencies and build artifacts
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Credentials and local environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+.aws/
+
+# Local generated artifacts and scratch work
+tmp/
+output/
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+
+# Local database and object-store data
+.data/
+postgres-data/
+redis-data/
+minio-data/
