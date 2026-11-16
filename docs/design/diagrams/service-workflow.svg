@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1120" viewBox="0 0 1280 1120" role="img" aria-label="From service request to recorded outcome">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M1 1L8 5L1 9" fill="none" stroke="#6b83ab" stroke-width="1.6"/></marker></defs>
+<rect width="1280" height="1120" rx="20" fill="#f7f9ff"/>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#122344}.title{font-size:29px;font-weight:700}.sub{font-size:16px;fill:#61718b}.name{font-size:20px;font-weight:700}.detail{font-size:15px;fill:#526785}.label{font-size:14px;fill:#526785}</style>
+<text x="40" y="50" class="title">From service request to recorded outcome</text><text x="40" y="80" class="sub">A human-approved workflow connecting preparation, field work and follow-ups.</text>
+<rect x="110" y="115" width="600" height="80" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="410.0" y="151.0" text-anchor="middle" class="name">1. Capture or import the request</text>
+<text x="410.0" y="178.0" text-anchor="middle" class="detail">Customer, site, equipment and service need</text>
+<rect x="110" y="235" width="600" height="80" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="410.0" y="271.0" text-anchor="middle" class="name">2. Review context and readiness</text>
+<text x="410.0" y="298.0" text-anchor="middle" class="detail">Check prerequisites, required parts and missing details</text>
+<path d="M410 195V235" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M410 355L710 410L410 465L110 410Z" fill="#edf3ff" stroke="#245cf6" stroke-width="1.7"/>
+<text x="410" y="417" text-anchor="middle" class="name">Ready to proceed?</text>
+<path d="M410 315V355" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="900" y="370" width="300" height="80" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="1050.0" y="406.0" text-anchor="middle" class="name">Resolve the gaps</text>
+<text x="1050.0" y="433.0" text-anchor="middle" class="detail">Update evidence and review again</text>
+<path d="M710 410H900" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="750" y="395" class="label">Not yet</text>
+<path d="M1050 370V275H710" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="110" y="515" width="600" height="80" rx="13" fill="#edf3ff" stroke="#b4cbff" stroke-width="1.6"/>
+<text x="410.0" y="551.0" text-anchor="middle" class="name">3. Compare and approve a technician</text>
+<text x="410.0" y="578.0" text-anchor="middle" class="detail">Revalidate eligibility; reserve required stock in LEDGER mode</text>
+<path d="M410 465V515" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="430" y="493" class="label">Yes</text>
+<rect x="110" y="635" width="600" height="80" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="410.0" y="671.0" text-anchor="middle" class="name">4. Acknowledge and start the visit</text>
+<text x="410.0" y="698.0" text-anchor="middle" class="detail">The assigned technician receives the preparation context</text>
+<path d="M410 595V635" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="110" y="755" width="600" height="80" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="410.0" y="791.0" text-anchor="middle" class="name">5. Record findings and close</text>
+<text x="410.0" y="818.0" text-anchor="middle" class="detail">Record actual stock use; release unused allocations</text>
+<path d="M410 715V755" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="900" y="755" width="300" height="80" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="1050.0" y="791.0" text-anchor="middle" class="name">Linked follow-up draft</text>
+<text x="1050.0" y="818.0" text-anchor="middle" class="detail">When another visit is needed</text>
+<path d="M710 795H900" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M1200 795H1240V145H710" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="950" y="130" class="label">Fresh preparation and assignment</text>
+<rect x="110" y="885" width="600" height="80" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="410.0" y="921.0" text-anchor="middle" class="name">6. Review outcomes and reporting</text>
+<text x="410.0" y="948.0" text-anchor="middle" class="detail">Trace recorded reasons, exclusions and company changes</text>
+<path d="M410 835V885" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="110" y="1020" class="label">Required stock is protected only for ledger-backed assignments.</text>
+<text x="110" y="1050" class="label">Follow-ups copy context and requirements, not assignments or stock allocations.</text>
+</svg>

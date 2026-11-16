@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="1080" viewBox="0 0 1280 1080" role="img" aria-label="ServiceGrid IQ system architecture">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M1 1L8 5L1 9" fill="none" stroke="#6b83ab" stroke-width="1.6"/></marker></defs>
+<rect width="1280" height="1080" rx="20" fill="#f7f9ff"/>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#122344}.title{font-size:29px;font-weight:700}.sub{font-size:16px;fill:#61718b}.name{font-size:20px;font-weight:700}.detail{font-size:15px;fill:#526785}.label{font-size:14px;fill:#526785}</style>
+<text x="40" y="50" class="title">ServiceGrid IQ system architecture</text><text x="40" y="80" class="sub">Current local environment: modular API, separate document worker and private data services.</text>
+<rect x="410" y="115" width="460" height="80" rx="13" fill="#edf3ff" stroke="#b4cbff" stroke-width="1.6"/>
+<text x="640.0" y="151.0" text-anchor="middle" class="name">Desktop and mobile web</text>
+<text x="640.0" y="178.0" text-anchor="middle" class="detail">Owners, dispatchers and assigned technicians</text>
+<rect x="410" y="265" width="460" height="80" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="640.0" y="301.0" text-anchor="middle" class="name">Nginx + React application</text>
+<text x="640.0" y="328.0" text-anchor="middle" class="detail">TypeScript / Vite; same-origin API requests</text>
+<rect x="40" y="265" width="280" height="105" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="180.0" y="313.5" text-anchor="middle" class="name">Keycloak / OIDC</text>
+<text x="180.0" y="340.5" text-anchor="middle" class="detail">Local identity provider</text>
+<rect x="410" y="425" width="460" height="105" rx="13" fill="#edf3ff" stroke="#b4cbff" stroke-width="1.6"/>
+<text x="640.0" y="473.5" text-anchor="middle" class="name">Express API + Zod</text>
+<text x="640.0" y="500.5" text-anchor="middle" class="detail">Authorization, business rules and transactions</text>
+<rect x="40" y="670" width="340" height="115" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="210.0" y="723.5" text-anchor="middle" class="name">PostgreSQL + pgvector</text>
+<text x="210.0" y="750.5" text-anchor="middle" class="detail">Operational data, audit and full-text search</text>
+<rect x="470" y="670" width="340" height="115" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="640.0" y="723.5" text-anchor="middle" class="name">Redis + BullMQ</text>
+<text x="640.0" y="750.5" text-anchor="middle" class="detail">Authenticated ingestion queue</text>
+<rect x="940" y="670" width="300" height="115" rx="13" fill="#ffffff" stroke="#d7e2f5" stroke-width="1.6"/>
+<text x="1090.0" y="723.5" text-anchor="middle" class="name">Private object storage</text>
+<text x="1090.0" y="750.5" text-anchor="middle" class="detail">S3-compatible / SeaweedFS</text>
+<rect x="470" y="870" width="340" height="100" rx="13" fill="#edf3ff" stroke="#b4cbff" stroke-width="1.6"/>
+<text x="640.0" y="916.0" text-anchor="middle" class="name">Document worker</text>
+<text x="640.0" y="943.0" text-anchor="middle" class="detail">Extraction, indexing and recovery sweeps</text>
+<rect x="940" y="870" width="300" height="100" rx="13" fill="#f0edff" stroke="#d3c8f4" stroke-width="1.6"/>
+<text x="1090.0" y="916.0" text-anchor="middle" class="name">Optional OpenAI</text>
+<text x="1090.0" y="943.0" text-anchor="middle" class="detail">Embeddings and evidence selection</text>
+<path d="M640 195V265" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M410 155H180V265" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="215" y="139" class="label">Browser sign-in redirects</text>
+<path d="M640 345V425" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="660" y="390" class="label">API requests</text>
+<path d="M410 475H350V320H320" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="40" y="422" class="label">API uses the OIDC backchannel</text>
+<path d="M640 530V590H210V670" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="50" y="646" class="label">Scoped reads / writes</text>
+<path d="M640 530V670" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="660" y="626" class="label">Queue work</text>
+<path d="M640 530V590H1090V670" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="945" y="646" class="label">Private file access</text>
+<path d="M640 785V870" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="660" y="833" class="label">Ingest documents</text>
+<path d="M470 920H420V728H380" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="42" y="829" class="label">Publish chunks and ingestion state</text>
+<path d="M810 920H880V728H940" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="897" y="827" class="label">Read files</text>
+<path d="M810 920H940" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="7 6"/>
+<path d="M870 475H1260V920H1240" fill="none" stroke="#6b83ab" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="7 6"/>
+<text x="40" y="1015" class="label">Dashed connections: optional provider processing with consent, configuration and usage limits.</text>
+<text x="40" y="1045" class="label">Prisma runs migrations as a separate job. AWS staging is prepared separately and remains undeployed.</text>
+</svg>

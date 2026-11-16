@@ -90,25 +90,7 @@ The technician interface is responsive, online mobile web. Native and offline ap
 
 ## The complete service workflow
 
-```mermaid
-flowchart LR
-    A[Capture or import request] --> B[Review job and equipment]
-    B --> C[Check readiness]
-    C --> D{Gaps resolved?}
-    D -- No --> B
-    D -- Yes --> E[Compare eligible technicians]
-    E --> F[Dispatcher approves assignment]
-    F --> G[Technician acknowledges and starts]
-    G --> H[Record findings and actual stock use]
-    H --> I[Close visit]
-    I --> J{Follow-up needed?}
-    J -- Yes --> K[Create linked follow-up draft]
-    K --> B
-    J -- No --> L[Review outcome and reporting]
-    I --> L
-    classDef primary fill:#edf3ff,stroke:#245cf6,color:#122344
-    class A,C,E,F,G,H,I,L primary
-```
+![Complete service workflow](docs/design/diagrams/service-workflow.png)
 
 In LEDGER mode, assignment also reserves confirmed required stock within the same transaction. Closure releases unused quantities. A follow-up draft receives context and requirements, rather than inheriting a technician assignment or stock allocation.
 
@@ -160,49 +142,7 @@ A follow-up is a linked service request with a recorded reason. It enters its ow
 
 ServiceGrid IQ uses a **modular monolith with a separate background worker process**. The API owns business rules and transactional operations; the worker handles document ingestion. The worker runs from the API codebase and image, rather than being an unimplemented future service.
 
-```mermaid
-flowchart TB
-    subgraph Clients[User interfaces]
-        Desktop[Owner and dispatcher web]
-        Mobile[Technician mobile web]
-    end
-
-    subgraph Local[Current Docker Compose environment]
-        Web[Nginx + React / TypeScript / Vite]
-        Identity[Keycloak OIDC identity provider]
-        API[Express API + Zod contracts]
-        DB[(PostgreSQL + pgvector + full-text search)]
-        Redis[(Authenticated Redis / BullMQ)]
-        Worker[Document ingestion worker]
-        Storage[(Private S3-compatible storage / SeaweedFS)]
-        Migrate[Prisma migration job]
-    end
-
-    subgraph Optional[Optional external service]
-        AI[OpenAI embeddings and evidence selection]
-    end
-
-    Desktop --> Web
-    Mobile --> Web
-    Web -->|Same-origin API requests| API
-    Desktop -. OIDC browser redirects .-> Identity
-    Mobile -. OIDC browser redirects .-> Identity
-    API -->|OIDC backchannel| Identity
-    API -->|Scoped reads and transactional writes| DB
-    API -->|Private uploads and downloads| Storage
-    API -->|Queue ingestion work| Redis
-    Redis --> Worker
-    Worker -->|Read approved documents| Storage
-    Worker -->|Publish chunks and ingestion state| DB
-    API -. Explicit opt-in and document consent .-> AI
-    Worker -. Consented embeddings when configured .-> AI
-    Migrate --> DB
-
-    classDef app fill:#edf3ff,stroke:#245cf6,color:#122344
-    classDef data fill:#f3f6fb,stroke:#8da3c5,color:#122344
-    class Web,API,Worker,Identity,Migrate app
-    class DB,Redis,Storage data
-```
+![ServiceGrid IQ system architecture](docs/design/diagrams/system-architecture.png)
 
 **Reading the architecture:**
 
@@ -382,18 +322,14 @@ A useful evaluation starts with:
 - Your current systems and the records you can export for a controlled evaluation.
 - A small set of agreed pilot measures, such as preparation gaps caught, recorded follow-up reasons and dispatcher review effort.
 
-**Contact the project owner:** [Sai Koushik Pallapolu on GitHub](https://github.com/saikoushikpallapolu). The profile is the public contact entry point; no unattended sales inbox or support channel is implied. Share only a non-sensitive overview through any public channel, then agree on an appropriate private discussion method.
+For evaluation inquiries, use the contact information available on the [GitHub profile](https://github.com/saikoushikpallapolu).
 
-Pilots, hosting, integrations, support and any commercial arrangement require an agreed scope. The repository provides a working product to evaluate, rather than a promise of unverified operational results.
+## License
 
-## License and ownership
-
-ServiceGrid IQ is maintained by [saikoushikpallapolu](https://github.com/saikoushikpallapolu) and distributed under the [MIT License](LICENSE). Commercial reuse and redistribution are permitted under that license; this README does not replace its terms or promise exclusive software rights.
-
-Customer records, proprietary equipment manuals and third-party materials are not licensed by this repository. See [maintenance and feedback guidance](CONTRIBUTING.md) for repository handling.
+Distributed under the [MIT License](LICENSE). Customer records, proprietary equipment manuals and third-party materials are not covered by the repository license.
 
 ## Product demo
 
-A recorded walkthrough will be added here by the project owner. Until then, use the screenshots, implemented walkthroughs and local setup above to explore the MVP.
+A recorded product walkthrough will be added here. Until then, use the screenshots, implemented walkthroughs and local setup above to explore the MVP.
 
 <!-- Add the demo video link or linked thumbnail here when the recording is ready. -->
