@@ -23,6 +23,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://servicegrid:ci-only-fictional-password@localhost:5432/servicegrid
       POSTGRES_PORT: 5433
+      SEED_LOCAL_IDENTITIES: 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,7 +48,12 @@ jobs:
           node scripts/setup-env.mjs
           docker compose --env-file .env -f infrastructure/compose.yaml config --quiet
           docker compose --env-file .env -f infrastructure/compose.yaml up -d --build --wait --wait-timeout 180
+          docker compose --env-file .env -f infrastructure/compose.yaml run --rm migrate pnpm --filter @servicegrid/api db:seed
           pnpm smoke
+      - name: Install browser and test real OIDC flow
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm test:browser
       - name: Stop containers
         if: always()
         run: docker compose --env-file .env -f infrastructure/compose.yaml down

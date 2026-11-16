@@ -4,7 +4,9 @@
   "private": true,
   "license": "MIT",
   "packageManager": "pnpm@11.25.0",
-  "engines": { "node": ">=24.19.0 <25" },
+  "engines": {
+    "node": ">=24.19.0 <25"
+  },
   "scripts": {
     "dev": "pnpm --filter @servicegrid/contracts build && concurrently -k -n api,web \"pnpm --filter @servicegrid/api dev\" \"pnpm --filter @servicegrid/web dev\"",
     "build": "pnpm --filter @servicegrid/contracts build && pnpm --filter @servicegrid/api build && pnpm --filter @servicegrid/web build",
@@ -12,6 +14,7 @@
     "lint": "eslint .",
     "test": "pnpm --filter @servicegrid/contracts build && pnpm --filter @servicegrid/api test",
     "test:integration": "pnpm --filter @servicegrid/contracts build && pnpm --filter @servicegrid/api test:integration",
+    "test:browser": "playwright test",
     "check:docs": "node scripts/check-docs.mjs",
     "db:generate": "pnpm --filter @servicegrid/api db:generate",
     "db:migrate": "pnpm --filter @servicegrid/api db:migrate",
@@ -21,10 +24,11 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.1",
     "concurrently": "^9.2.1",
     "eslint": "10.15.0",
+    "globals": "^16.4.0",
     "typescript": "5.9.3",
-    "typescript-eslint": "^8.46.0",
-    "globals": "^16.4.0"
+    "typescript-eslint": "^8.46.0"
   }
 }

@@ -3,7 +3,7 @@
   "info": {
     "title": "ServiceGrid IQ Controlled Pilot API",
     "version": "2.0.0",
-    "description": "Pilot contract accompanying blueprint v2.0. Managed identity and tenant checks are mandatory. No running service is supplied. Ledger, AI, self-service tenant provisioning, branch-restricted authorization and notifications are later scope. Request datetime values must be UTC; cross-field business rules are enforced by domain services."
+    "description": "Pilot contract accompanying blueprint v2.0. Managed identity and tenant checks are mandatory. No running service is supplied. Ledger, AI, self-service tenant provisioning, branch-restricted authorization and notifications are later scope. Request datetime values must be UTC; cross-field business rules are enforced by domain services. Authentication was refined in ADR 0002 to server-side OIDC sessions with HttpOnly cookies. Browser bearer tokens are not accepted. See phase-2-openapi.json for the implemented authentication subset; business operations here remain planned."
   },
   "servers": [
     {
@@ -13,7 +13,10 @@
   ],
   "security": [
     {
-      "ManagedIdentity": []
+      "SecureSession": []
+    },
+    {
+      "LocalSession": []
     }
   ],
   "paths": {
@@ -480,6 +483,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -777,6 +799,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -1074,6 +1115,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -1372,6 +1432,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -1670,6 +1749,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -1968,6 +2066,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -2265,6 +2382,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -2563,6 +2699,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -2716,6 +2871,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -2868,6 +3042,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -3184,6 +3377,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -3337,6 +3549,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -3805,6 +4036,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -3970,6 +4220,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -4406,6 +4675,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -4580,6 +4868,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -4745,6 +5052,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -5074,6 +5400,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -5248,6 +5593,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -5422,6 +5786,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -5581,6 +5964,25 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -5737,6 +6139,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -5902,6 +6323,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -6056,6 +6496,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -6210,6 +6669,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -6540,6 +7018,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -6706,6 +7203,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -6871,6 +7387,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -7024,6 +7559,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -7176,6 +7730,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -7319,6 +7892,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -7607,6 +8199,25 @@
           },
           {
             "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Session CSRF token returned by GET /api/auth/session."
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Must exactly match the configured application origin."
           }
         ],
         "responses": {
@@ -8043,11 +8654,17 @@
   },
   "components": {
     "securitySchemes": {
-      "ManagedIdentity": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "Provider-issued access token; verify signature issuer audience expiry and revocation policy server-side."
+      "SecureSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-sg_session",
+        "description": "HTTPS OIDC backend session; use the Phase 2 auth endpoints to sign in."
+      },
+      "LocalSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "sg_session",
+        "description": "Loopback local development only; not accepted in managed HTTPS mode."
       }
     },
     "parameters": {

@@ -1,0 +1,36 @@
+{
+  "realm": "servicegrid",
+  "enabled": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 28800,
+  "clients": [{
+    "clientId": "servicegrid-web",
+    "protocol": "openid-connect",
+    "name": "ServiceGrid IQ local development",
+    "enabled": true,
+    "publicClient": true,
+    "standardFlowEnabled": true,
+    "directAccessGrantsEnabled": false,
+    "implicitFlowEnabled": false,
+    "redirectUris": ["http://localhost:8080/api/auth/callback", "http://localhost:5173/api/auth/callback"],
+    "webOrigins": ["http://localhost:8080", "http://localhost:5173"],
+    "defaultClientScopes": ["email", "profile"],
+    "attributes": {
+      "pkce.code.challenge.method": "S256",
+      "post.logout.redirect.uris": "http://localhost:8080##http://localhost:5173"
+    }
+  }],
+  "users": [
+    { "id": "10000000-0000-4000-8000-000000000001", "username": "owner.alpha@example.test", "email": "owner.alpha@example.test", "emailVerified": true, "enabled": true, "firstName": "Alpha", "lastName": "Owner" },
+    { "id": "10000000-0000-4000-8000-000000000002", "username": "dispatcher.alpha@example.test", "email": "dispatcher.alpha@example.test", "emailVerified": true, "enabled": true, "firstName": "Alpha", "lastName": "Dispatcher" },
+    { "id": "10000000-0000-4000-8000-000000000003", "username": "technician.alpha@example.test", "email": "technician.alpha@example.test", "emailVerified": true, "enabled": true, "firstName": "Alpha", "lastName": "Technician" },
+    { "id": "10000000-0000-4000-8000-000000000004", "username": "owner.beta@example.test", "email": "owner.beta@example.test", "emailVerified": true, "enabled": true, "firstName": "Beta", "lastName": "Owner" },
+    { "id": "10000000-0000-4000-8000-000000000005", "username": "new.member@example.test", "email": "new.member@example.test", "emailVerified": true, "enabled": true, "firstName": "New", "lastName": "Member" }
+  ]
+}

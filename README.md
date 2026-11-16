@@ -4,7 +4,7 @@
 
 ServiceGrid IQ is a planned field-service preparation tool that helps dispatchers identify missing job information, check technician eligibility, confirm required-part readiness, and approve assignments with clear explanations. Technicians will receive preparation cards and record visit outcomes, including linked follow-ups.
 
-**Status: Phase 1 local foundation implemented; AWS staging awaits account setup and budget approval.** The React frontend, Express API, shared contracts, PostgreSQL migration, fictional seeds, and Docker configuration are implemented. Business features and authentication remain planned. No customer outcome claims are made.
+**Status: Phase 2 local authentication and company isolation implemented; AWS staging explicitly deferred.** Sign-in/sign-out, company selection, owner-managed roles, private invitations, and access audit are implemented. Service intake and dispatch remain planned. No production identity deployment or customer outcome claims are made.
 
 ## The problem we are testing
 
@@ -30,6 +30,8 @@ The pilot uses **timestamped manual parts confirmation**, not protected stock re
 | [Build blueprint v2 — Markdown](docs/architecture/ServiceGrid_IQ_Build_Blueprint_v2.md) · [PDF](docs/architecture/ServiceGrid_IQ_Build_Blueprint_v2.pdf) | Product boundaries, policies, lifecycle, data model, architecture, security, and acceptance criteria |
 | [Phase-wise build plan — Markdown](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md) · [PDF](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.pdf) | Detailed tasks, estimates, completion gates, and extension phases |
 | [Pilot OpenAPI contract](docs/api/ServiceGrid_IQ_Pilot_OpenAPI_v2.json) | OpenAPI 3.1 contract with 52 proposed operations; no backend implementation supplied |
+| [Phase 2 API contract](docs/api/phase-2-openapi.json) | Implemented OIDC/session, membership, invitation and audit endpoints |
+| [Phase 2 checklist](docs/plans/phase-2-checklist.md) | Local completion evidence and deferred deployment boundaries |
 | [Phase 1 checklist](docs/plans/phase-1-checklist.md) | Immediate implementation tasks and completion evidence |
 | [Documentation index](docs/README.md) | Reading order and source-of-truth rules |
 | [Original blueprint v1 — archived PDF](docs/archive/ServiceGrid_IQ_Product_and_Engineering_Blueprint.pdf) | Historical reference; v2 supersedes it for new implementation decisions |
@@ -46,7 +48,7 @@ The pilot uses **timestamped manual parts confirmation**, not protected stock re
 | Later asynchronous work | Redis and BullMQ when document ingestion or sustained background tasks require them |
 | Later document knowledge | Private S3-compatible storage, pgvector, PostgreSQL full-text search, provider adapters |
 
-Node.js 24.19.0 and pnpm 11.25.0 are pinned. Prisma 7.10.1 and PostgreSQL 17 are used with a committed lockfile. See [Phase 1 decisions](docs/architecture/0001-phase-1-foundation.md). Authentication is Phase 2. AWS staging is prepared but has not been provisioned.
+Node.js 24.19.0 and pnpm 11.25.0 are pinned. Prisma 7.10.1 and PostgreSQL 17 are used with a committed lockfile. See [Phase 1 decisions](docs/architecture/0001-phase-1-foundation.md). Local sign-in uses Keycloak and OIDC server-side sessions. See [authentication decisions](docs/architecture/0002-authentication-and-tenancy.md). AWS staging is prepared but explicitly deferred.
 
 ## Repository layout
 
@@ -69,7 +71,7 @@ scripts/                # Setup, smoke, documentation and deployment helpers
 .github/workflows/      # Documentation, application CI and manual AWS release
 ```
 
-The web, API, contracts, local Compose stack, and AWS staging configuration now contain implementation. The worker directory remains reserved for a later phase.
+The web, API, contracts, local Compose stack with Keycloak, and AWS staging configuration now contain implementation. The worker directory remains reserved for a later phase.
 
 ## Getting started
 
@@ -81,14 +83,15 @@ pnpm install --frozen-lockfile
 pnpm setup:env
 pnpm db:generate
 docker compose --env-file .env -f infrastructure/compose.yaml up -d --build --wait --wait-timeout 180
+docker compose --env-file .env -f infrastructure/compose.yaml run --rm migrate pnpm --filter @servicegrid/api db:seed
 pnpm smoke
 ```
 
-Open [http://localhost:8080](http://localhost:8080). Docker Desktop must be running. See [local development](docs/operations/local-development.md) for hot reload, seeds, tests, logs, and safe shutdown. See [AWS setup for beginners](docs/operations/aws-staging.md) for account and staging steps. The current screen reports actual API/database health; it is not a dispatch dashboard.
+Open [http://localhost:8080](http://localhost:8080). Docker Desktop must be running. See [local development](docs/operations/local-development.md) for hot reload, seeds, tests, logs, and safe shutdown. See [AWS setup for beginners](docs/operations/aws-staging.md) for account and staging steps. Click Sign in and use a generated fictional account from your ignored `.data/local-accounts.json`. See the [Phase 2 sign-in guide](docs/operations/phase-2-local.md). Use localhost for browser sign-in. The identity container is development-only; no public cloud identity provider is configured.
 
 The documentation check requires Node.js 22 or later and no package installation. It checks required files, local Markdown links, JSON parsing, local OpenAPI references, and operation IDs. It is not a full OpenAPI validator or application test suite.
 
-Track remaining deployment evidence in the [Phase 1 checklist](docs/plans/phase-1-checklist.md). CI builds, checks types/lint, runs unit and PostgreSQL integration tests, and smoke-tests the Docker stack. AWS release is a separate manual workflow requiring account configuration and approval.
+Track remaining deployment evidence in the [Phase 1 checklist](docs/plans/phase-1-checklist.md) and [Phase 2 checklist](docs/plans/phase-2-checklist.md). CI builds, checks types/lint, runs unit and PostgreSQL integration tests, smoke-tests the Docker stack, and runs real OIDC browser checks. AWS release is a separate manual workflow requiring account configuration and approval.
 
 ## Delivery plan
 

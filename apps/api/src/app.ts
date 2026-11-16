@@ -5,8 +5,10 @@ import { rateLimit } from 'express-rate-limit';
 import pino from 'pino';
 import { pinoHttp } from 'pino-http';
 import { healthSchema } from '@servicegrid/contracts';
+import type { Router } from 'express';
+import { authError } from './auth/router.js';
 
-export function createApp(options: { checkDatabase: () => Promise<void>; logLevel?: string }) {
+export function createApp(options: { checkDatabase: () => Promise<void>; logLevel?: string; authRouter?: Router }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());
@@ -40,9 +42,12 @@ export function createApp(options: { checkDatabase: () => Promise<void>; logLeve
       res.status(503).json(health('down'));
     } finally { clearTimeout(timer); }
   });
+  if (options.authRouter) app.use('/api', options.authRouter);
   app.use((req, res) => { res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Route not found', traceId: String(req.id) } }); });
   const errorHandler: ErrorRequestHandler = (error: unknown, req, res, _next) => {
     void _next; // Express identifies error middleware by its four-argument signature.
+    const known = authError(error);
+    if (known) { res.status(known.status).json({ error: { code: known.code, message: known.message, traceId: String(req.id) } }); return; }
     const status = typeof error === 'object' && error !== null && 'status' in error && typeof error.status === 'number' ? error.status : 500;
     const safeStatus = status >= 400 && status < 500 ? status : 500;
     res.status(safeStatus).json({ error: { code: safeStatus === 500 ? 'INTERNAL_ERROR' : 'INVALID_REQUEST', message: safeStatus === 500 ? 'An unexpected error occurred' : 'Invalid request', traceId: String(req.id) } });

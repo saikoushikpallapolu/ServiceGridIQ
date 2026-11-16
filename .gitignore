@@ -36,3 +36,5 @@ infrastructure/aws/.env*
 !infrastructure/aws/.env.example
 *.tfstate
 *.tfstate.*
+test-results/
+playwright-report/

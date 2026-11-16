@@ -13,6 +13,99 @@ model Organization {
   timezone  String   @default("Asia/Kolkata")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  active    Boolean  @default(true)
+  memberships Membership[]
+  sessions AuthSession[]
+  invitations Invitation[]
+  auditEvents AuditEvent[]
 
   @@map("organizations")
+}
+
+enum Role {
+  OWNER
+  DISPATCHER
+  TECHNICIAN
+}
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  issuer String
+  subject String
+  email String
+  name String
+  active Boolean @default(true)
+  memberships Membership[]
+  sessions AuthSession[]
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  @@unique([issuer, subject])
+  @@map("users")
+}
+
+model Membership {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  role Role
+  active Boolean @default(true)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  invitations Invitation[]
+  auditEvents AuditEvent[]
+  @@unique([organizationId, userId])
+  @@unique([organizationId, id])
+  @@map("memberships")
+}
+
+model AuthSession {
+  tokenHash String @id @map("token_hash")
+  userId String @map("user_id") @db.Uuid
+  activeOrganizationId String? @map("active_organization_id") @db.Uuid
+  csrfToken String @map("csrf_token")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  lastSeenAt DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization? @relation(fields: [activeOrganizationId], references: [id], onDelete: SetNull)
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("auth_sessions")
+}
+
+model LoginTransaction {
+  stateHash String @id @map("state_hash")
+  verifier String
+  nonce String
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  @@index([expiresAt])
+  @@map("login_transactions")
+}
+
+model Invitation {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  createdByMembershipId String @map("created_by_membership_id") @db.Uuid
+  tokenHash String @unique @map("token_hash")
+  email String
+  role Role
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+  acceptedAt DateTime? @map("accepted_at") @db.Timestamptz(3)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  creator Membership @relation(fields: [organizationId, createdByMembershipId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, id])
+  @@index([organizationId, email])
+  @@map("invitations")
+}
+
+model AuditEvent {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  actorMembershipId String @map("actor_membership_id") @db.Uuid
+  action String
+  targetId String @map("target_id")
+  details Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  actor Membership @relation(fields: [organizationId, actorMembershipId], references: [organizationId, id], onDelete: Restrict)
+  @@index([organizationId, createdAt, id])
+  @@map("audit_events")
 }

@@ -19,7 +19,7 @@ See [verification evidence](../operations/phase-1-verification.md) for executed 
 - [x] Select and pin supported Node.js and package-manager versions.
 - [x] Record the workspace/package strategy and lockfile policy.
 - [x] Confirm the PostgreSQL version and Prisma migration approach.
-- [ ] Select the managed identity provider during Phase 2; explicitly deferred in the accepted foundation decisions.
+- [x] Select the Phase 2 OIDC design and local Keycloak provider; actual managed-provider provisioning remains deferred with AWS.
 - [ ] Select staging hosting, container registry, database location, region, and budget.
 - [x] Decide licensing before external contributions or distribution.
 
@@ -53,3 +53,5 @@ Do not build workers, Redis ingestion, RAG, inventory reservations, or business-
 ## Accepted setup decisions
 
 See [Phase 1 decisions](../architecture/0001-phase-1-foundation.md), [local setup](../operations/local-development.md), and [AWS account and staging guide](../operations/aws-staging.md). The project owner approved the baseline stack, AWS staging for learning, and MIT licensing. Local setup does not depend on AWS account creation.
+
+The owner explicitly authorized proceeding with Phase 2 locally while AWS staging remains deferred on 16 November 2026. Phase 1 cloud deployment is still incomplete; this authorization changes sequencing, not its verification status.

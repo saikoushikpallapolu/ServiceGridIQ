@@ -26,6 +26,7 @@ jobs:
           --health-interval 5s --health-timeout 3s --health-retries 20
     env:
       DATABASE_URL: postgresql://servicegrid:ci-only-fictional-password@localhost:5432/servicegrid
+      SEED_LOCAL_IDENTITIES: 'true'
       AWS_REGION: ${{ vars.AWS_REGION }}
       STAGING_INSTANCE_ID: ${{ vars.STAGING_INSTANCE_ID }}
       DATABASE_SECRET_ARN: ${{ vars.DATABASE_SECRET_ARN }}
