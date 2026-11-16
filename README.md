@@ -2,9 +2,9 @@
 
 **Dispatch readiness for HVAC service teams.**
 
-ServiceGrid IQ is a planned field-service preparation tool that helps dispatchers identify missing job information, check technician eligibility, confirm required-part readiness, and approve assignments with clear explanations. Technicians will receive preparation cards and record visit outcomes, including linked follow-ups.
+ServiceGrid IQ is a field-service preparation tool that helps dispatchers identify missing job information, check technician eligibility, confirm required-part readiness, and approve assignments with clear explanations. Technicians receive preparation cards and record visit outcomes, including linked follow-ups.
 
-**Status: Phase 5 local readiness and approved assignment implemented; AWS staging explicitly deferred.** Sign-in/sign-out, company selection, roles, invitations, customer/site/equipment records, draft intake, the filtered job queue, triage and job history are implemented. Owner-verified qualifications, branch policy, shifts and explainable appointment eligibility are implemented. Manual parts/prerequisite evidence, readiness, deterministic ranking and idempotent assignment are implemented. Technician execution and follow-up remain planned. No production identity deployment or customer outcome claims are made.
+**Status: Phase 6 local core workflow implemented; AWS staging explicitly deferred.** Company access, intake, technician eligibility, manual preparation evidence, readiness, ranking and approved assignment are implemented. Assigned technicians can acknowledge, start, record findings and close visits. Unresolved visits create linked follow-up drafts; dispatchers can cancel or reschedule before work starts. CSV onboarding/reporting and controlled-pilot operating safeguards remain later phases. Customer benefit and production readiness still need validation.
 
 ## The problem we are testing
 
@@ -31,6 +31,8 @@ The pilot uses **timestamped manual parts confirmation**, not protected stock re
 | [Phase-wise build plan â€” Markdown](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md) Â· [PDF](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.pdf) | Detailed tasks, estimates, completion gates, and extension phases |
 | [Pilot OpenAPI contract](docs/api/ServiceGrid_IQ_Pilot_OpenAPI_v2.json) | OpenAPI 3.1 contract with 52 proposed operations; no backend implementation supplied |
 | [Phase 2 API contract](docs/api/phase-2-openapi.json) | Implemented OIDC/session, membership, invitation and audit endpoints |
+| [Phase 6 API contract](docs/api/phase-6-openapi.json) | Implemented technician visits, outcomes, follow-ups and lifecycle actions |
+| [Phase 6 walkthrough](docs/operations/phase-6-local.md) · [checklist](docs/plans/phase-6-checklist.md) | Try the complete local dispatcher-to-technician workflow |
 | [Phase 5 API contract](docs/api/phase-5-openapi.json) | Implemented preparation, live readiness, ranking and approved assignment |
 | [Phase 5 walkthrough](docs/operations/phase-5-local.md) · [checklist](docs/plans/phase-5-checklist.md) | Prepare a job, resolve gaps and approve an eligible technician |
 | [Phase 4 API contract](docs/api/phase-4-openapi.json) | Implemented workforce, scheduling policy and eligibility endpoints |
@@ -61,8 +63,8 @@ Node.js 24.19.0 and pnpm 11.25.0 are pinned. Prisma 7.10.1 and PostgreSQL 17 are
 
 ```text
 apps/
-  web/                  # React company access and dispatcher intake; technician workflow planned
-  api/                  # Express health, identity, tenant and intake APIs
+  web/                  # React dispatcher and technician workspaces
+  api/                  # Express identity, intake, preparation and visit APIs
   worker/               # Reserved for later asynchronous processing
 packages/
   contracts/            # Shared runtime schemas and TypeScript types

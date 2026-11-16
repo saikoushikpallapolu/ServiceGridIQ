@@ -3,12 +3,15 @@ import { reject } from '../auth/errors.js';
 import { validArrivalWindow, type JobInput } from '@servicegrid/contracts';
 
 export async function intakeWrite<T>(db: PrismaClient, actor: Membership, work: (tx: Prisma.TransactionClient) => Promise<T>) {
+  return companyWrite(db, actor, ['OWNER', 'DISPATCHER'], (tx) => work(tx));
+}
+export async function companyWrite<T>(db: PrismaClient, actor: Membership, roles: Membership['role'][], work: (tx: Prisma.TransactionClient, current: Membership) => Promise<T>) {
   return db.$transaction(async (tx) => {
     // The same company lock used for role changes makes authorization and writes atomic.
     await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${actor.organizationId}::uuid FOR UPDATE`;
     const current = await tx.membership.findUnique({ where: { organizationId_id: { organizationId: actor.organizationId, id: actor.id } }, include: { user: true, organization: true } });
-    if (!current?.active || !current.user.active || !current.organization.active || !['OWNER', 'DISPATCHER'].includes(current.role)) return reject(403, 'FORBIDDEN', 'Dispatcher or owner access required');
-    return work(tx);
+    if (!current?.active || !current.user.active || !current.organization.active || !roles.includes(current.role)) return reject(403, 'FORBIDDEN', 'Current company role does not permit this action');
+    return work(tx, current);
   });
 }
 

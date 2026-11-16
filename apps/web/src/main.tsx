@@ -7,6 +7,8 @@ import { api, ApiError } from './api';
 import { Intake } from './Intake';
 import { Workforce } from './Workforce';
 import { PartsCatalog } from './PartsCatalog';
+import { TechnicianWorkspace } from './TechnicianWorkspace';
+import { confirmDiscard, clearUnsavedChanges } from './unsaved';
 
 const authConfigSchema = z.object({ enabled: z.boolean(), mode: z.string(), loginUrl: z.url() });
 const auditSchema = z.object({ items: z.array(z.object({ id: z.uuid(), action: z.string(), targetId: z.string(), createdAt: z.iso.datetime() })) });
@@ -70,6 +72,7 @@ function App() {
     } finally { setBusy(false); }
   }
   function selectOrganization(id: string) {
+    if (id === session?.activeOrganization?.id || !confirmDiscard()) return;
     void action(async () => {
       await api('/api/v1/me/organization', { method: 'POST', body: JSON.stringify({ organizationId: id }) }, session);
       await load(); setMessage('Company workspace updated.');
@@ -91,9 +94,10 @@ function App() {
     });
   }
   function signOut() {
+    if (!confirmDiscard()) return;
     void action(async () => {
       const result = z.object({ logoutUrl: z.url() }).parse(await api('/api/auth/logout', { method: 'POST' }, session));
-      sessionStorage.removeItem('pendingInvitation'); setSession(null); setMembers([]); setAudit([]); window.location.assign(result.logoutUrl);
+      clearUnsavedChanges(); sessionStorage.removeItem('pendingInvitation'); setSession(null); setMembers([]); setAudit([]); window.location.assign(result.logoutUrl);
     });
   }
   const company = session?.activeOrganization;
@@ -108,7 +112,8 @@ function App() {
         {!session ? <section className="status-panel signin-panel"><p className="eyebrow">WELCOME TO SERVICEGRID IQ</p><h2>Sign in to your workspace</h2><p className="lede">Use your company account to continue.</p>{config?.enabled ? <a className="primary-button" href={config.loginUrl}>Sign in</a> : <p>Sign-in is not configured for this environment.</p>}</section> : <>
           {pendingInvite && <section className="status-panel invitation-panel"><h2>You have a company invitation</h2><p>Accept using the email address the invitation was sent to.</p><button disabled={busy} onClick={() => void action(async () => { await api('/api/v1/invitations/accept', { method: 'POST', body: JSON.stringify({ token: pendingInvite }) }, session); sessionStorage.removeItem('pendingInvitation'); setPendingInvite(''); await load(); setMessage('Invitation accepted. Select your company below.'); })}>Accept invitation</button></section>}
           <section className="status-panel" aria-labelledby="company-title"><div className="panel-heading"><div><p className="eyebrow">COMPANY SELECTION</p><h2 id="company-title">Where are you working today?</h2></div></div>{organizations.length ? <div className="company-grid">{organizations.map((organization) => <button key={organization.id} disabled={busy} aria-pressed={company?.id === organization.id} className={`company-card ${company?.id === organization.id ? 'selected' : ''}`} onClick={() => selectOrganization(organization.id)}><strong>{organization.name}</strong><span>{organization.role.toLowerCase()}</span><small>{company?.id === organization.id ? 'Active workspace' : 'Open workspace →'}</small></button>)}</div> : <p>No company access has been assigned yet. Ask your company owner for an invitation.</p>}</section>
-          {company && <section className="workspace-summary"><span className="role-badge">{company.role}</span><h2>{company.name}</h2><p>{company.role === 'OWNER' ? 'You can manage intake, team access and review company changes.' : 'Your company workspace is ready. Dispatchers can manage intake; assigned-job tools arrive in a later phase.'}</p></section>}
+          {company && <section className="workspace-summary"><span className="role-badge">{company.role}</span><h2>{company.name}</h2><p>{company.role === 'OWNER' ? 'You can manage intake, team access and review company changes.' : 'Dispatchers manage intake and approvals. Technicians can acknowledge, complete and report outcomes for their assigned visits.'}</p></section>}
+          {company?.role === 'TECHNICIAN' && <TechnicianWorkspace key={`technician-${company.id}`} session={session!} />}
           {company && company.role !== 'TECHNICIAN' && <Intake key={`intake-${company.id}`} session={session!} />}
           {company && company.role !== 'TECHNICIAN' && <Workforce key={`workforce-${company.id}`} session={session!} />}
           {company && company.role !== 'TECHNICIAN' && <PartsCatalog key={`parts-${company.id}`} session={session!} />}
@@ -122,7 +127,7 @@ function App() {
           </>}
         </>}
         <section className="next-section"><div><p className="eyebrow">CONNECTION STATUS</p><h2>Application foundation</h2></div><p>{health ? `API ${health.status === 'ok' ? 'connected' : 'degraded'} · Database ${health.checks.database}` : 'Check the current application and database connection.'}</p><button disabled={busy} onClick={() => void action(async () => { const response = await fetch('/health/ready', { signal: AbortSignal.timeout(6000) }); setHealth(healthSchema.parse(await response.json())); })}>Check connection</button></section>
-        <footer>ServiceGrid IQ <span>Readiness and approved assignment are available. Technician execution is still in development.</span></footer>
+        <footer>ServiceGrid IQ <span>The core service workflow is available locally. Hosting and pilot operating safeguards remain pending.</span></footer>
       </>}
     </main>
   </div>;

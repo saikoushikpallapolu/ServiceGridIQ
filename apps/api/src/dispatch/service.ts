@@ -29,7 +29,7 @@ export async function readiness(tx: Prisma.TransactionClient, organizationId: st
   const checks: Check[] = [];
   const add = (code: string, status: Check['status'], severity: Check['severity'], message: string, evidenceId: string | null = null, verifiedBy: string | null = null, verifiedAt: Date | null = null) => checks.push({ code, status, severity, message, evidenceId, verifiedBy, verifiedAt: verifiedAt?.toISOString() ?? null, acknowledged: severity === 'WARNING' && !!acknowledgments[code]?.reason });
   add('INTAKE', job.complaint.trim() && job.serviceCategory.trim() && job.site.address.trim() ? 'PASS' : 'FAIL', 'BLOCKER', 'Complaint, service category, equipment and site address must be recorded.');
-  add('TRIAGED', ['TRIAGED', 'READY', 'ASSIGNED'].includes(job.status) ? 'PASS' : 'FAIL', 'BLOCKER', 'Intake must be triaged before approval.');
+  add('TRIAGED', ['TRIAGED', 'READY', 'ASSIGNED', 'ACKNOWLEDGED', 'IN_PROGRESS', 'CLOSED'].includes(job.status) ? 'PASS' : 'FAIL', 'BLOCKER', 'Intake must be triaged before approval.');
   const planned = job.plannedStart;
   add('APPOINTMENT', planned && planned >= job.arrivalStart && planned < job.arrivalEnd && planned > now ? 'PASS' : 'UNKNOWN', 'BLOCKER', 'Save a future arrival inside the customer window, with explicit work and travel estimates.');
   add('QUALIFICATION_POLICY', job.scheduling && (job.scheduling.generalInspection ? job.scheduling.requirements.length === 0 : job.scheduling.requirements.length > 0) ? 'PASS' : 'UNKNOWN', 'BLOCKER', 'Specify required skills or explicitly select general inspection and a service branch.');

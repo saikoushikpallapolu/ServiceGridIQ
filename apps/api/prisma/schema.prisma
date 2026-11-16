@@ -69,6 +69,8 @@ model Membership {
   prerequisiteEvidence PrerequisiteEvidence[]
   approvals Assignment[]
   idempotencies IdempotencyRecord[]
+  observations VisitObservation[]
+  visitClosures VisitClosure[]
   @@unique([organizationId, userId])
   @@unique([organizationId, id])
   @@map("memberships")
@@ -79,6 +81,15 @@ enum JobStatus {
   TRIAGED
   READY
   ASSIGNED
+  ACKNOWLEDGED
+  IN_PROGRESS
+  CLOSED
+  CANCELLED
+}
+
+enum JobType {
+  INITIAL
+  FOLLOW_UP
 }
 
 enum JobPriority {
@@ -150,6 +161,17 @@ model Job {
   customerId String @map("customer_id") @db.Uuid
   siteId String @map("site_id") @db.Uuid
   equipmentId String @map("equipment_id") @db.Uuid
+  jobType JobType @default(INITIAL) @map("job_type")
+  parentJobId String? @unique @map("parent_job_id") @db.Uuid
+  rootJobId String? @map("root_job_id") @db.Uuid
+  cancelledAt DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancellationReason String? @map("cancellation_reason")
+  parent Job? @relation("FollowUpParent", fields: [organizationId, parentJobId], references: [organizationId, id], onDelete: Restrict)
+  followUp Job? @relation("FollowUpParent")
+  root Job? @relation("FollowUpRoot", fields: [organizationId, rootJobId], references: [organizationId, id], onDelete: Restrict)
+  descendants Job[] @relation("FollowUpRoot")
+  observations VisitObservation[]
+  closure VisitClosure?
   complaint String
   serviceCategory String @default("GENERAL_SERVICE") @map("service_category")
   plannedStart DateTime? @map("planned_start") @db.Timestamptz(3)
@@ -179,6 +201,8 @@ model Job {
   @@unique([organizationId, id])
   @@index([organizationId, createdAt, id])
   @@index([organizationId, status, priority])
+  @@unique([organizationId, parentJobId])
+  @@index([organizationId, rootJobId])
   @@index([organizationId, equipmentId, createdAt])
   @@map("jobs")
 }
@@ -398,6 +422,7 @@ model Part {
   unit String
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   requirements JobPart[]
+  observations VisitObservation[]
   @@unique([organizationId, id])
   @@unique([organizationId, sku])
   @@map("parts")
@@ -498,6 +523,14 @@ model Assignment {
   rankingSnapshot Json @map("ranking_snapshot")
   approvalReason String @map("approval_reason")
   active Boolean @default(true)
+  acknowledgedAt DateTime? @map("acknowledged_at") @db.Timestamptz(3)
+  startedAt DateTime? @map("started_at") @db.Timestamptz(3)
+  endedAt DateTime? @map("ended_at") @db.Timestamptz(3)
+  releasedAt DateTime? @map("released_at") @db.Timestamptz(3)
+  releaseKind String? @map("release_kind")
+  releaseReason String? @map("release_reason")
+  observations VisitObservation[]
+  closure VisitClosure?
   resolvedAt DateTime? @map("resolved_at") @db.Timestamptz(3)
   job Job @relation(fields: [organizationId, jobId], references: [organizationId, id], onDelete: Restrict)
   technician Technician @relation(fields: [organizationId, technicianId], references: [organizationId, id], onDelete: Restrict)
@@ -505,6 +538,7 @@ model Assignment {
   approver Membership @relation(fields: [organizationId, approvedByMembershipId], references: [organizationId, id], onDelete: Restrict)
   outbox OutboxEvent[]
   @@unique([organizationId, id])
+  @@unique([organizationId, jobId, id])
   @@unique([organizationId, jobId, technicianId, reservationId])
   @@index([organizationId, technicianId, resolvedAt])
   @@map("assignments")
@@ -534,4 +568,48 @@ model OutboxEvent {
   @@unique([organizationId, assignmentId, kind])
   @@index([publishedAt, createdAt])
   @@map("outbox_events")
+}
+
+model VisitObservation {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  jobId String @map("job_id") @db.Uuid
+  assignmentId String @map("assignment_id") @db.Uuid
+  actorMembershipId String @map("actor_membership_id") @db.Uuid
+  kind String
+  note String
+  recordedJobVersion Int @map("recorded_job_version")
+  partId String? @map("part_id") @db.Uuid
+  partLabel String? @map("part_label")
+  quantity Decimal? @db.Decimal(12,3)
+  correctsId String? @map("corrects_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  job Job @relation(fields: [organizationId, jobId], references: [organizationId, id], onDelete: Restrict)
+  assignment Assignment @relation(fields: [organizationId, jobId, assignmentId], references: [organizationId, jobId, id], onDelete: Restrict)
+  actor Membership @relation(fields: [organizationId, actorMembershipId], references: [organizationId, id], onDelete: Restrict)
+  part Part? @relation(fields: [organizationId, partId], references: [organizationId, id], onDelete: Restrict)
+  corrects VisitObservation? @relation("ObservationCorrection", fields: [organizationId, jobId, assignmentId, correctsId], references: [organizationId, jobId, assignmentId, id], onDelete: Restrict)
+  corrections VisitObservation[] @relation("ObservationCorrection")
+  @@unique([organizationId, id])
+  @@unique([organizationId, jobId, assignmentId, id])
+  @@index([organizationId, assignmentId, createdAt, id])
+  @@map("visit_observations")
+}
+
+model VisitClosure {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  jobId String @unique @map("job_id") @db.Uuid
+  assignmentId String @unique @map("assignment_id") @db.Uuid
+  actorMembershipId String @map("actor_membership_id") @db.Uuid
+  outcome String
+  followUpReason String? @map("follow_up_reason")
+  notes String
+  closedAt DateTime @default(now()) @map("closed_at") @db.Timestamptz(3)
+  job Job @relation(fields: [organizationId, jobId], references: [organizationId, id], onDelete: Restrict)
+  assignment Assignment @relation(fields: [organizationId, jobId, assignmentId], references: [organizationId, jobId, id], onDelete: Restrict)
+  actor Membership @relation(fields: [organizationId, actorMembershipId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, jobId])
+  @@unique([organizationId, jobId, assignmentId])
+  @@map("visit_closures")
 }

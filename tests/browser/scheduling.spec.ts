@@ -2,6 +2,13 @@ import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
 test.use({ timezoneId: 'Asia/Kolkata' });
+// Earlier browser files exercise the same seeded owner at automation speed.
+// Respect the real 300/user/minute protection before the next owner-heavy group.
+// Keep this pacing in tests; do not disable or raise application rate limits.
+test.beforeAll(async () => {
+  test.setTimeout(75_000);
+  await new Promise((resolve) => setTimeout(resolve, 60_000));
+});
 const accounts = JSON.parse(readFileSync('.data/local-accounts.json', 'utf8')) as { email: string; password: string }[];
 const alpha = '00000000-0000-4000-8000-000000000001';
 const mainBranch = '60000000-0000-4000-8000-000000000001';

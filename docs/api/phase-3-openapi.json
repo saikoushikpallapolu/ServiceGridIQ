@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ServiceGrid IQ implemented Phase 3 intake API",
-    "version": "0.5.0",
-    "description": "Local implementation contract. Owner/dispatcher only. Arrival instants require an offset, end after start and at most seven days later. Duration and travel are estimates, not appointments. Intake edits support DRAFT, TRIAGED and READY with the latest version; READY edits invalidate preparation and return to TRIAGED. ASSIGNED intake is locked. Ordinary transitions remain DRAFT/TRIAGED; use the Phase 5 preparation endpoints for readiness and assignment. History contains the newest 20 other equipment requests; timeline contains the newest 100 events. No deletion, equipment relocation, technician queue access or scheduling is implemented."
+    "version": "0.6.0",
+    "description": "Local implementation contract. Owner/dispatcher only. Arrival instants require an offset, end after start and at most seven days later. Duration and travel are estimates, not appointments. Intake edits support DRAFT, TRIAGED and READY with the latest version; READY edits invalidate preparation and return to TRIAGED. Assigned and later intake is locked. See Phase 6 for execution, cancellation and rescheduling. Ordinary transitions remain DRAFT/TRIAGED; use the Phase 5 preparation endpoints for readiness and assignment. History contains the newest 20 other equipment requests; timeline contains the newest 100 events. No deletion, equipment relocation, technician queue access or scheduling is implemented."
   },
   "paths": {
     "/api/v1/customers": {
@@ -1369,7 +1369,11 @@
                 "DRAFT",
                 "TRIAGED",
                 "READY",
-                "ASSIGNED"
+                "ASSIGNED",
+                "ACKNOWLEDGED",
+                "IN_PROGRESS",
+                "CLOSED",
+                "CANCELLED"
               ]
             },
             "description": "Exact state."
@@ -2710,7 +2714,11 @@
               "DRAFT",
               "TRIAGED",
               "READY",
-              "ASSIGNED"
+              "ASSIGNED",
+              "ACKNOWLEDGED",
+              "IN_PROGRESS",
+              "CLOSED",
+              "CANCELLED"
             ]
           },
           "plannedStart": {
@@ -2719,6 +2727,40 @@
                 "type": "string",
                 "format": "date-time",
                 "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "jobType": {
+            "default": "INITIAL",
+            "type": "string",
+            "enum": [
+              "INITIAL",
+              "FOLLOW_UP"
+            ]
+          },
+          "parentJobId": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rootJobId": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
               {
                 "type": "null"
@@ -2742,7 +2784,10 @@
           "createdAt",
           "updatedAt",
           "status",
-          "plannedStart"
+          "plannedStart",
+          "jobType",
+          "parentJobId",
+          "rootJobId"
         ],
         "additionalProperties": true
       },
@@ -2830,7 +2875,11 @@
               "DRAFT",
               "TRIAGED",
               "READY",
-              "ASSIGNED"
+              "ASSIGNED",
+              "ACKNOWLEDGED",
+              "IN_PROGRESS",
+              "CLOSED",
+              "CANCELLED"
             ]
           },
           "plannedStart": {
@@ -2839,6 +2888,40 @@
                 "type": "string",
                 "format": "date-time",
                 "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "jobType": {
+            "default": "INITIAL",
+            "type": "string",
+            "enum": [
+              "INITIAL",
+              "FOLLOW_UP"
+            ]
+          },
+          "parentJobId": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rootJobId": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
               {
                 "type": "null"
@@ -2872,6 +2955,9 @@
           "updatedAt",
           "status",
           "plannedStart",
+          "jobType",
+          "parentJobId",
+          "rootJobId",
           "customerName",
           "siteName",
           "equipmentLabel"
@@ -2962,7 +3048,11 @@
               "DRAFT",
               "TRIAGED",
               "READY",
-              "ASSIGNED"
+              "ASSIGNED",
+              "ACKNOWLEDGED",
+              "IN_PROGRESS",
+              "CLOSED",
+              "CANCELLED"
             ]
           },
           "plannedStart": {
@@ -2971,6 +3061,40 @@
                 "type": "string",
                 "format": "date-time",
                 "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "jobType": {
+            "default": "INITIAL",
+            "type": "string",
+            "enum": [
+              "INITIAL",
+              "FOLLOW_UP"
+            ]
+          },
+          "parentJobId": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rootJobId": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
               {
                 "type": "null"
@@ -3279,7 +3403,11 @@
                     "DRAFT",
                     "TRIAGED",
                     "READY",
-                    "ASSIGNED"
+                    "ASSIGNED",
+                    "ACKNOWLEDGED",
+                    "IN_PROGRESS",
+                    "CLOSED",
+                    "CANCELLED"
                   ]
                 },
                 "plannedStart": {
@@ -3288,6 +3416,40 @@
                       "type": "string",
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "jobType": {
+                  "default": "INITIAL",
+                  "type": "string",
+                  "enum": [
+                    "INITIAL",
+                    "FOLLOW_UP"
+                  ]
+                },
+                "parentJobId": {
+                  "default": null,
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "rootJobId": {
+                  "default": null,
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                     },
                     {
                       "type": "null"
@@ -3321,6 +3483,9 @@
                 "updatedAt",
                 "status",
                 "plannedStart",
+                "jobType",
+                "parentJobId",
+                "rootJobId",
                 "customerName",
                 "siteName",
                 "equipmentLabel"
@@ -3346,6 +3511,9 @@
           "updatedAt",
           "status",
           "plannedStart",
+          "jobType",
+          "parentJobId",
+          "rootJobId",
           "customer",
           "site",
           "equipment",

@@ -23,7 +23,7 @@ The fifth migration preserves earlier data and adds preparation/evidence/approva
 7. Inspect Current readiness. SUSPECTED parts without current positive evidence need an explicit warning acknowledgment; REQUIRED parts always block. Changing a requirement or visit invalidates corresponding earlier confirmations.
 8. When checks allow it, Mark job ready. Compare ranked technicians and inspect weighted contributions, booked/available minutes and missing-history flags.
 9. Select an eligible technician, review the saved travel/arrival/end times, give an approval reason and Approve assignment. The job becomes ASSIGNED and displays who approved it and the reserved technician interval.
-10. Ordinary preparation edits are now locked. Technician acknowledgment, execution, cancellation and rescheduling arrive in Phase 6.
+10. Ordinary preparation edits are now locked. Continue with the [Phase 6 walkthrough](phase-6-local.md) for technician acknowledgment, execution, cancellation and rescheduling.
 
 Parts are manually confirmed, not reserved. Do not treat this workflow as inventory accounting or a guarantee that a part will remain available until the visit.
 

@@ -28,7 +28,7 @@ const text = (max: number) => z.string().trim().min(1).max(max);
 export const customerInputSchema = z.object({ name: text(160), email: z.email().max(254).nullable(), phone: text(40).nullable() }).strict();
 export const siteInputSchema = z.object({ customerId: z.uuid(), name: text(160), address: text(500), accessNotes: z.string().trim().max(2000) }).strict();
 export const equipmentInputSchema = z.object({ siteId: z.uuid(), manufacturer: text(120), model: text(120), serialNumber: text(160), notes: z.string().trim().max(2000) }).strict();
-export const jobStatusSchema = z.enum(['DRAFT', 'TRIAGED', 'READY', 'ASSIGNED']);
+export const jobStatusSchema = z.enum(['DRAFT', 'TRIAGED', 'READY', 'ASSIGNED', 'ACKNOWLEDGED', 'IN_PROGRESS', 'CLOSED', 'CANCELLED']);
 export const jobPrioritySchema = z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']);
 export const jobInputSchema = z.object({
   customerId: z.uuid(), siteId: z.uuid(), equipmentId: z.uuid(), complaint: text(4000), serviceCategory: text(120).default('GENERAL_SERVICE'), priority: jobPrioritySchema,
@@ -45,7 +45,7 @@ const recordFields = { id: z.uuid(), version: z.number().int().positive(), creat
 export const customerSchema = customerInputSchema.extend(recordFields).strip();
 export const siteSchema = siteInputSchema.extend(recordFields).strip();
 export const equipmentSchema = equipmentInputSchema.extend(recordFields).strip();
-export const jobSchema = jobInputSchema.extend({ ...recordFields, status: jobStatusSchema, plannedStart: z.iso.datetime().nullable() }).strip();
+export const jobSchema = jobInputSchema.extend({ ...recordFields, status: jobStatusSchema, plannedStart: z.iso.datetime().nullable(), jobType: z.enum(['INITIAL', 'FOLLOW_UP']).default('INITIAL'), parentJobId: z.uuid().nullable().default(null), rootJobId: z.uuid().nullable().default(null) }).strip();
 export const jobSummarySchema = jobSchema.extend({ customerName: z.string(), siteName: z.string(), equipmentLabel: z.string() });
 export const jobEventSchema = z.object({ id: z.uuid(), kind: z.string(), note: z.string(), createdAt: z.iso.datetime(), actorName: z.string() });
 export const jobDetailSchema = jobSchema.extend({ customer: customerSchema, site: siteSchema, equipment: equipmentSchema,
@@ -104,3 +104,17 @@ export const assignmentSchema = z.object({ id: z.uuid(), technicianId: z.uuid(),
 export type Readiness = z.infer<typeof readinessSchema>;
 export type Preparation = z.infer<typeof preparationSchema>;
 export type Ranking = z.infer<typeof rankingSchema>;
+
+export const visitActionInputSchema = z.object({ version: positiveVersion, assignmentId: z.uuid() }).strict();
+export const followUpReasonSchema = z.enum(['PARTS', 'SKILLS', 'INFORMATION', 'ACCESS', 'NEW_FAULT', 'CUSTOMER_REQUEST', 'OTHER']);
+export const closeVisitInputSchema = visitActionInputSchema.extend({ outcome: z.enum(['RESOLVED', 'FOLLOW_UP_REQUIRED']), notes: text(4000), followUpReason: followUpReasonSchema.nullable(), followUpWindow: z.object({ arrivalStart: instant, arrivalEnd: instant }).strict().nullable() });
+export const observationInputSchema = visitActionInputSchema.extend({ kind: z.enum(['NOTE', 'PART_USAGE', 'CORRECTION']), note: text(4000), partId: z.uuid().nullable(), partLabel: text(160).nullable(), quantity: jobPartInputSchema.shape.quantity.nullable(), correctsId: z.uuid().nullable() });
+export const cancelVisitInputSchema = z.object({ version: positiveVersion, assignmentId: z.uuid().nullable(), reason: text(2000) }).strict();
+export const rescheduleVisitInputSchema = visitActionInputSchema.extend({ reason: text(2000), arrivalStart: instant, arrivalEnd: instant, estimatedDurationMinutes: z.number().int().min(15).max(1440), travelBufferMinutes: z.number().int().min(0).max(480) });
+export const visitActionResultSchema = z.object({ jobId: z.uuid(), jobVersion: positiveVersion, status: jobStatusSchema, assignmentId: z.uuid().nullable(), followUpJobId: z.uuid().nullable(), observationId: z.uuid().optional() });
+export const visitAssignmentSchema = assignmentSchema.extend({ jobId: z.uuid(), acknowledgedAt: z.iso.datetime().nullable(), startedAt: z.iso.datetime().nullable(), endedAt: z.iso.datetime().nullable(), releaseKind: z.string().nullable(), releaseReason: z.string().nullable() });
+export const observationSchema = z.object({ id: z.uuid(), kind: z.string(), note: z.string(), partId: z.uuid().nullable(), partLabel: z.string().nullable(), quantity: z.string().nullable(), correctsId: z.uuid().nullable(), actorName: z.string(), createdAt: z.iso.datetime() });
+export const visitClosureSchema = z.object({ outcome: z.enum(['RESOLVED', 'FOLLOW_UP_REQUIRED']), followUpReason: followUpReasonSchema.nullable(), notes: z.string(), actorName: z.string(), closedAt: z.iso.datetime() });
+export const visitCardSchema = z.object({ assignment: visitAssignmentSchema, job: jobSchema, customer: customerSchema, site: siteSchema, equipment: equipmentSchema, approvalReadiness: readinessSchema, currentEvidence: z.array(readinessCheckSchema), parts: z.array(z.object({ partId: z.uuid(), name: z.string(), unit: z.string() })), observations: z.array(observationSchema), closure: visitClosureSchema.nullable(), followUpJobId: z.uuid().nullable() });
+export const myAssignmentSchema = z.object({ assignmentId: z.uuid(), jobId: z.uuid(), version: positiveVersion, status: jobStatusSchema, jobType: z.enum(['INITIAL', 'FOLLOW_UP']), customerName: z.string(), complaint: z.string(), plannedStart: z.iso.datetime(), endsAt: z.iso.datetime() });
+export type VisitCard = z.infer<typeof visitCardSchema>;
