@@ -14,6 +14,8 @@ The owner authorized Phase 4 locally and explicitly deferred AWS account creatio
 - [x] Fictional main/annex technicians and demo scheduling data.
 - [x] 23 unit/protocol tests and 39 PostgreSQL integration tests passed, including overlapping reservations, availability races and verified-user rate buckets. Docker builds, type checks and lint passed; production dependency audit reported no known vulnerabilities.
 - [x] All nine full-Docker real-provider browser scenarios and smoke checks passed. Desktop and 390px mobile eligibility screenshots visually reviewed.
-- [ ] Successful GitHub CI evidence recorded.
+- [x] [GitHub Application CI passed](https://github.com/saikoushikpallapolu/ServiceGridIQ/actions/runs/43871096157) for commit 3426ba6: fresh migrations and repeat seed, build, types, lint, dependency audit, 23 unit/protocol tests, 39 PostgreSQL integration tests, generated API contracts, Docker smoke checks, all nine real-provider browser tests and infrastructure syntax validation.
 
 Public assignment, ranking, parts readiness, scheduling release/reschedule lifecycle, technician self-service and AWS/production operation remain outside this phase. See the [walkthrough](../operations/phase-4-local.md) and [design](../architecture/0004-scheduling-foundation.md).
+
+Verification recorded on 16 November 2026. Local browser checks caught and corrected workspace component-key collisions and form-label lookup issues. The combined suite also exposed a shared-proxy request bucket, replaced by verified-user limits with an isolation regression test. No AWS resources were provisioned.
