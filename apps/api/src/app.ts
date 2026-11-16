@@ -2,25 +2,25 @@ import { randomUUID } from 'node:crypto';
 import express, { type ErrorRequestHandler } from 'express';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
-import pino from 'pino';
+import pino, { type DestinationStream } from 'pino';
 import { pinoHttp } from 'pino-http';
 import { healthSchema } from '@servicegrid/contracts';
 import type { Router } from 'express';
 import { authError } from './auth/router.js';
 
-export function createApp(options: { checkDatabase: () => Promise<void>; logLevel?: string; authRouter?: Router }) {
+export function createApp(options: { checkDatabase: () => Promise<void>; logLevel?: string; authRouter?: Router; logDestination?: DestinationStream }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(pinoHttp({
-    logger: pino({ level: options.logLevel ?? 'info', redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'] }),
+    logger: pino({ level: options.logLevel ?? 'info', redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]', 'res.headers.location'] }, options.logDestination),
     genReqId: (_req, res) => {
       const id = randomUUID();
       res.setHeader('X-Request-Id', id);
       return id;
     },
     // Log no query strings, request bodies, or raw error objects.
-    serializers: { req: (req) => ({ id: req.id, method: req.method, url: String(req.url).split('?')[0] }), err: () => ({ message: 'Request failed' }) },
+    serializers: { req: (req) => ({ id: req.id, method: req.method, url: String(req.url).split('?')[0] }), res: (res) => ({ statusCode: res.statusCode }), err: () => ({ message: 'Request failed' }) },
   }));
   app.use(express.json({ limit: '32kb' }));
   app.use('/api', rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false,

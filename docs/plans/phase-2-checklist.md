@@ -16,7 +16,7 @@ AWS staging was explicitly deferred by the owner to proceed locally. This phase 
 - [x] Controlled operator CLI for provisioning a company and its initial verified owner.
 - [x] Local Keycloak provider and randomly generated ignored fictional accounts.
 - [x] Migration, idempotent local seed, API contract and operation guides.
-- [x] Thirteen unit/protocol tests, including forged-token and expired-token rejection.
+- [x] Fourteen unit/protocol tests, including forged-token rejection and authentication-log redaction.
 - [x] Sixteen PostgreSQL integration tests, including tenant isolation and owner-change concurrency.
 - [x] Three native real-provider browser scenarios, including mobile role restrictions and logout.
 - [x] Four full-Docker real-provider browser scenarios, including invitation acceptance, and smoke checks.

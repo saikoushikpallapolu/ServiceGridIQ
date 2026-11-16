@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { createApp } from './app.js';
+import { Router } from 'express';
 
 describe('health boundaries', () => {
   it('remains live when the database is down and hides dependency errors', async () => {
@@ -28,5 +29,14 @@ describe('health boundaries', () => {
     expect(invalid.text).not.toContain('{secret');
     const missing = await request(app).get('/api/v1/jobs').expect(404);
     expect(missing.body.error.traceId).toBeTruthy();
+  });
+  it('does not log cookies, authorization, callback queries or redirect state', async () => {
+    let logs = '';
+    const routes = Router();
+    routes.get('/redirect', (_req, res) => { res.cookie('sg_session', 'outgoing-secret'); res.redirect('http://localhost:8082/auth?state=redirect-secret'); });
+    const app = createApp({ checkDatabase: async () => {}, authRouter: routes, logDestination: { write: (line) => { logs += line; } } });
+    await request(app).get('/api/redirect?code=callback-secret').set('Cookie', 'sg_session=incoming-secret').set('Authorization', 'Bearer authorization-secret').expect(302);
+    expect(logs).toContain('302');
+    for (const secret of ['outgoing-secret', 'redirect-secret', 'callback-secret', 'incoming-secret', 'authorization-secret']) expect(logs).not.toContain(secret);
   });
 });
