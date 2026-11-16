@@ -22,10 +22,14 @@ Verified locally on 16 November 2026 using Windows, Node.js 24.19.0, pnpm 11.25.
 - The served frontend includes Content-Security-Policy after correcting Nginx header inheritance.
 - `.env` and `apps/api/.env` are ignored by Git; setup generates local credentials without printing them.
 
+## GitHub and infrastructure verification
+
+- [Application CI passed for commit 75ba562](https://github.com/saikoushikpallapolu/ServiceGridIQ/actions/runs/43816268807): fresh Linux checkout, frozen dependency installation, build, type checks, lint, production dependency audit, five unit/API tests, repeated seed, PostgreSQL integration, full Docker build and container smoke test.
+- CloudFormation schema lint and deployment-script shell syntax checks passed in the infrastructure job. These checks do not verify AWS provisioning or live deployment.
+- The API container includes OpenSSL 3 and CA certificates; its final rebuild, migration startup and smoke checks passed locally.
+
 ## Pending evidence
 
-- GitHub application CI and fresh-checkout results will be recorded after the implementation is pushed.
-- CloudFormation schema lint passed using cfn-lint. Deployment-script shell syntax passed inside the Linux image. These checks do not verify AWS provisioning or live deployment.
 - AWS account, region, budget approval and access are not configured. No infrastructure has been created; there is no staging deployment to verify yet.
 
 This is a foundation release. It does not establish tenant authorization, business API coverage, production readiness or measured customer benefit.

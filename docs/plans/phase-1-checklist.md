@@ -42,9 +42,9 @@ Do not build workers, Redis ingestion, RAG, inventory reservations, or business-
 
 ## Completion evidence
 
-- [ ] Record a successful clean-clone setup.
+- [x] Record a successful clean-clone setup through the fresh Linux CI checkout and full Docker smoke test.
 - [x] Record application check commands and their results.
-- [ ] Link the successful CI run.
+- [x] Link the [successful application and infrastructure CI run](https://github.com/saikoushikpallapolu/ServiceGridIQ/actions/runs/43816268807).
 - [ ] Record the staging URL and deployed commit without exposing credentials.
 - [x] Verify readiness correctly reports database unavailability.
 - [x] Confirm no secrets or private client records are tracked.
