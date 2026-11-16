@@ -6,6 +6,7 @@ import { reject } from '../auth/errors.js';
 import { audit, companyWrite } from '../intake/service.js';
 import { lockTechnician } from '../scheduling/service.js';
 import { readiness } from '../dispatch/service.js';
+import { releaseStock } from '../inventory/ledger.js';
 
 export const visitInclude = { reservation: true, approver: { include: { user: true } }, technician: { include: { membership: { include: { user: true } }, skills: true } }, job: { include: { site: { include: { customer: true } }, equipment: true, followUp: { select: { id: true } }, closure: { include: { actor: { include: { user: true } } } }, scheduling: { include: { requirements: true } } } } } as const;
 type Visit = Prisma.AssignmentGetPayload<{ include: typeof visitInclude }>;
@@ -21,8 +22,8 @@ export async function visitCard(tx: Prisma.TransactionClient, actor: Membership,
   const observations = await tx.visitObservation.findMany({ where: { organizationId: actor.organizationId, assignmentId: id }, include: { actor: { include: { user: true } } }, orderBy: [{ recordedJobVersion: 'desc' }, { id: 'desc' }], take: 200 });
   const { site, equipment, followUp, closure, scheduling, ...jobCore } = assignment.job;
   void scheduling;
-  return { assignment: { id: assignment.id, jobId: assignment.jobId, technicianId: assignment.technicianId, technicianName: assignment.technician.membership.user.name, approvedByName: assignment.approver.user.name, approvedAt: assignment.approvedAt, approvalReason: assignment.approvalReason, active: assignment.active, acknowledgedAt: assignment.acknowledgedAt, startedAt: assignment.startedAt, endedAt: assignment.endedAt, releaseKind: assignment.releaseKind, releaseReason: assignment.releaseReason, reservedFrom: assignment.reservation.reservedFrom, plannedStart: assignment.reservation.plannedStart, endsAt: assignment.reservation.endsAt },
-    job: jobCore, customer: site.customer, site, equipment, approvalReadiness: assignment.readinessSnapshot,
+  return { assignment: { id: assignment.id, jobId: assignment.jobId, technicianId: assignment.technicianId, technicianName: assignment.technician.membership.user.name, approvedByName: assignment.approver.user.name, approvedAt: assignment.approvedAt, approvalReason: assignment.approvalReason, active: assignment.active, inventoryMode: assignment.inventoryMode, acknowledgedAt: assignment.acknowledgedAt, startedAt: assignment.startedAt, endedAt: assignment.endedAt, releaseKind: assignment.releaseKind, releaseReason: assignment.releaseReason, reservedFrom: assignment.reservation.reservedFrom, plannedStart: assignment.reservation.plannedStart, endsAt: assignment.reservation.endsAt },
+    job: jobCore, customer: site.customer, site, equipment, approvalReadiness: { ...(assignment.readinessSnapshot as Prisma.JsonObject), inventoryMode: assignment.inventoryMode },
     currentEvidence: current.result.checks.filter((item) => item.code.startsWith('PART:') || item.code.startsWith('PREREQUISITE:')),
     parts: [...new Map(current.job.partRequirements.map((part) => [part.partId, { partId: part.partId, name: part.part.name, unit: part.part.unit }])).values()],
     observations: observations.reverse().map(({ actor, quantity, ...row }) => ({ ...row, quantity: quantity?.toString() ?? null, actorName: actor.user.name })),
@@ -54,7 +55,7 @@ export function createVisitService(db: PrismaClient) {
     if (assignmentId && kind !== 'VISIT_OBSERVATION_RECORDED') await tx.outboxEvent.create({ data: { organizationId: actor.organizationId, assignmentId, kind, payload: { jobId, assignmentId, ...details } } });
   }
   const active = (assignment: Visit | null) => { if (!assignment?.active || !assignment.reservation.active) return reject(409, 'STALE_ASSIGNMENT', 'This assignment is no longer active'); return assignment; };
-  const release = async (tx: Prisma.TransactionClient, assignment: Visit, kind: string, reason: string, now: Date) => { await tx.appointmentReservation.update({ where: { id: assignment.reservationId }, data: { active: false } }); await tx.assignment.update({ where: { id: assignment.id }, data: { active: false, releasedAt: now, releaseKind: kind, releaseReason: reason } }); };
+  const release = async (tx: Prisma.TransactionClient, assignment: Visit, kind: string, reason: string, now: Date, actor: Membership) => { await releaseStock(tx, actor, assignment.id, `${kind}: ${reason}`); await tx.appointmentReservation.update({ where: { id: assignment.reservationId }, data: { active: false } }); await tx.assignment.update({ where: { id: assignment.id }, data: { active: false, releasedAt: now, releaseKind: kind, releaseReason: reason } }); };
   return {
     acknowledge: (actor: Membership, jobId: string, input: ActionInput, key: string) => mutate(actor, jobId, 'ACKNOWLEDGE', input, key, 'TECHNICIAN', async (tx, job, row, current) => {
       const assignment = active(row); if (job.status !== 'ASSIGNED') return reject(409, 'INVALID_TRANSITION', 'Only an assigned visit can be acknowledged');
@@ -82,11 +83,12 @@ export function createVisitService(db: PrismaClient) {
     }),
     close: (actor: Membership, jobId: string, input: z.infer<typeof closeVisitInputSchema>, key: string) => mutate(actor, jobId, 'CLOSE', input, key, 'VISIT', async (tx, job, row, current) => {
       const assignment = active(row); if (job.status !== 'IN_PROGRESS') return reject(409, 'INVALID_TRANSITION', 'Only an in-progress visit can be closed');
+      if (assignment.inventoryMode === 'LEDGER' && !input.inventoryReviewed) return reject(400, 'INVENTORY_REVIEW_REQUIRED', 'Record actual stock consumption and confirm inventory review before closing; unused allocations will be released');
       if (input.outcome === 'FOLLOW_UP_REQUIRED' ? !input.followUpReason || !input.followUpWindow : !!input.followUpReason || !!input.followUpWindow) return reject(400, 'INVALID_OUTCOME', 'Follow-up requires a reason and new arrival window; resolved closure must omit them');
       const now = new Date();
       if (input.followUpWindow && (!validArrivalWindow(input.followUpWindow) || new Date(input.followUpWindow.arrivalStart) <= now)) return reject(400, 'INVALID_FOLLOW_UP_WINDOW', 'Choose a valid future follow-up window of at most seven days');
       await tx.visitClosure.create({ data: { organizationId: current.organizationId, jobId, assignmentId: assignment.id, actorMembershipId: current.id, outcome: input.outcome, followUpReason: input.followUpReason, notes: input.notes, closedAt: now } });
-      await release(tx, assignment, 'CLOSED', input.outcome, now); await tx.assignment.update({ where: { id: assignment.id }, data: { endedAt: now, resolvedAt: input.outcome === 'RESOLVED' ? now : null } });
+      await release(tx, assignment, 'CLOSED', input.outcome, now, current); await tx.assignment.update({ where: { id: assignment.id }, data: { endedAt: now, resolvedAt: input.outcome === 'RESOLVED' ? now : null } });
       let followUpJobId: string | undefined;
       if (input.followUpWindow) {
         const child = await tx.job.create({ data: { organizationId: current.organizationId, jobType: 'FOLLOW_UP', parentJobId: job.id, rootJobId: job.rootJobId ?? job.id, customerId: job.customerId, siteId: job.siteId, equipmentId: job.equipmentId, complaint: job.complaint, serviceCategory: job.serviceCategory, priority: job.priority, arrivalStart: new Date(input.followUpWindow.arrivalStart), arrivalEnd: new Date(input.followUpWindow.arrivalEnd), estimatedDurationMinutes: job.estimatedDurationMinutes, travelBufferMinutes: job.travelBufferMinutes } }); followUpJobId = child.id;
@@ -101,13 +103,13 @@ export function createVisitService(db: PrismaClient) {
     cancel: (actor: Membership, jobId: string, input: ActionInput & { reason: string }, key: string) => mutate(actor, jobId, 'CANCEL', input, key, 'MANAGER', async (tx, job, row, current) => {
       if (!['DRAFT', 'TRIAGED', 'READY', 'ASSIGNED', 'ACKNOWLEDGED'].includes(job.status)) return reject(409, 'INVALID_TRANSITION', 'In-progress or terminal jobs cannot be cancelled');
       const currentAssignment = await tx.assignment.findFirst({ where: { organizationId: current.organizationId, jobId, active: true } }); if ((currentAssignment?.id ?? null) !== input.assignmentId) return reject(409, 'STALE_ASSIGNMENT', 'Reload the current assignment before cancelling');
-      if (currentAssignment) await release(tx, active(row), 'CANCELLED', input.reason, new Date());
+      if (currentAssignment) await release(tx, active(row), 'CANCELLED', input.reason, new Date(), current);
       const updated = await tx.job.update({ where: { id: jobId }, data: { status: 'CANCELLED', cancelledAt: new Date(), cancellationReason: input.reason, readySnapshot: Prisma.DbNull, version: { increment: 1 } } }); await event(tx, current, jobId, row?.id ?? null, 'JOB_CANCELLED', input.reason, { version: updated.version }); return { status: updated.status, version: updated.version };
     }),
     reschedule: (actor: Membership, jobId: string, input: z.infer<typeof rescheduleVisitInputSchema>, key: string) => mutate(actor, jobId, 'RESCHEDULE', input, key, 'MANAGER', async (tx, job, row, current) => {
       const assignment = active(row); if (!['ASSIGNED', 'ACKNOWLEDGED'].includes(job.status)) return reject(409, 'INVALID_TRANSITION', 'Only assigned or acknowledged visits can be rescheduled');
       if (!validArrivalWindow(input) || new Date(input.arrivalStart) <= new Date()) return reject(400, 'INVALID_WINDOW', 'Choose a valid future arrival window of at most seven days');
-      await release(tx, assignment, 'RESCHEDULED', input.reason, new Date());
+      await release(tx, assignment, 'RESCHEDULED', input.reason, new Date(), current);
       const updated = await tx.job.update({ where: { id: jobId }, data: { status: 'TRIAGED', arrivalStart: new Date(input.arrivalStart), arrivalEnd: new Date(input.arrivalEnd), estimatedDurationMinutes: input.estimatedDurationMinutes, travelBufferMinutes: input.travelBufferMinutes, plannedStart: null, partsReviewed: false, prerequisitesReviewed: false, readySnapshot: Prisma.DbNull, warningAcknowledgments: {}, visitRevision: { increment: 1 }, version: { increment: 1 } } });
       await event(tx, current, jobId, assignment.id, 'VISIT_RESCHEDULED', input.reason, { oldArrivalStart: job.arrivalStart.toISOString(), oldArrivalEnd: job.arrivalEnd.toISOString(), newArrivalStart: input.arrivalStart, newArrivalEnd: input.arrivalEnd, oldDuration: job.estimatedDurationMinutes, oldTravelBuffer: job.travelBufferMinutes, version: updated.version }); return { status: updated.status, version: updated.version };
     }),

@@ -10,6 +10,7 @@ import { PartsCatalog } from './PartsCatalog';
 import { TechnicianWorkspace } from './TechnicianWorkspace';
 import { DataWorkspace } from './DataWorkspace';
 import { ManualLibrary } from './ManualLibrary';
+import { InventoryWorkspace } from './InventoryWorkspace';
 import { confirmDiscard, clearUnsavedChanges } from './unsaved';
 
 const authConfigSchema = z.object({ enabled: z.boolean(), mode: z.string(), loginUrl: z.url() });
@@ -122,6 +123,7 @@ function App() {
           {company?.role === 'OWNER' && <>
             <DataWorkspace key={`data-${company.id}`} session={session!} />
             <ManualLibrary key={`manuals-${company.id}`} session={session!} />
+            <InventoryWorkspace key={`stock-${company.id}`} session={session!} />
             <section className="status-panel team-panel"><div className="panel-heading"><div><p className="eyebrow">TEAM ACCESS</p><h2>People in this company</h2></div></div>
               <div className="team-list">{members.map((member) => <article className="member-row" key={member.id}><div><strong>{member.name}</strong><span>{member.email}</span><small>{member.active ? 'Active' : 'Access disabled'}</small></div><div className="member-actions"><select aria-label={`Role for ${member.email}`} value={member.role} disabled={busy} onChange={(event) => updateMember(member, { role: event.target.value as Membership['role'] })}><option value="OWNER">Owner</option><option value="DISPATCHER">Dispatcher</option><option value="TECHNICIAN">Technician</option></select><button disabled={busy} onClick={() => { if (window.confirm(`${member.active ? 'Disable' : 'Enable'} access for ${member.name}?`)) updateMember(member, { active: !member.active }); }}>{member.active ? 'Disable access' : 'Enable access'}</button></div></article>)}</div>
               <form className="invite-form" onSubmit={invite}><h3>Invite someone</h3><div className="form-row"><label>Email address<input name="email" type="email" required placeholder="name@company.com" /></label><label>Role<select name="role" defaultValue="TECHNICIAN"><option value="TECHNICIAN">Technician</option><option value="DISPATCHER">Dispatcher</option><option value="OWNER">Owner</option></select></label><button type="submit" disabled={busy}>Create invitation</button></div></form>

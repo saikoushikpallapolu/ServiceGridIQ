@@ -852,7 +852,7 @@
     "/api/v1/visits/{jobId}/close": {
       "post": {
         "operationId": "closeVisitAndCreateFollowUp",
-        "description": "Assigned technician or owner/dispatcher; IN_PROGRESS only. RESOLVED requires null follow-up fields. FOLLOW_UP_REQUIRED requires a reason and positive future window no longer than seven days. Closure, release and one linked draft commit atomically.",
+        "description": "Assigned technician or owner/dispatcher; IN_PROGRESS only. RESOLVED requires null follow-up fields. FOLLOW_UP_REQUIRED requires a reason and positive future window no longer than seven days. Closure, release and one linked draft commit atomically. LEDGER assignments require inventoryReviewed=true and release unused protected stock; observations do not perform consumption.",
         "security": [
           {
             "Session": []
@@ -1392,6 +1392,10 @@
                 "type": "null"
               }
             ]
+          },
+          "inventoryReviewed": {
+            "default": false,
+            "type": "boolean"
           }
         },
         "required": [
@@ -1400,7 +1404,8 @@
           "outcome",
           "notes",
           "followUpReason",
-          "followUpWindow"
+          "followUpWindow",
+          "inventoryReviewed"
         ],
         "additionalProperties": false
       },
@@ -1691,6 +1696,14 @@
                 "format": "uuid",
                 "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
               },
+              "inventoryMode": {
+                "default": "MANUAL",
+                "type": "string",
+                "enum": [
+                  "MANUAL",
+                  "LEDGER"
+                ]
+              },
               "acknowledgedAt": {
                 "anyOf": [
                   {
@@ -1752,6 +1765,7 @@
               "plannedStart",
               "endsAt",
               "jobId",
+              "inventoryMode",
               "acknowledgedAt",
               "startedAt",
               "endedAt",
@@ -2105,6 +2119,14 @@
           "approvalReadiness": {
             "type": "object",
             "properties": {
+              "inventoryMode": {
+                "default": "MANUAL",
+                "type": "string",
+                "enum": [
+                  "MANUAL",
+                  "LEDGER"
+                ]
+              },
               "status": {
                 "type": "string",
                 "enum": [
@@ -2212,6 +2234,7 @@
               }
             },
             "required": [
+              "inventoryMode",
               "status",
               "jobVersion",
               "policyVersion",
@@ -2549,6 +2572,14 @@
                         "format": "uuid",
                         "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                       },
+                      "inventoryMode": {
+                        "default": "MANUAL",
+                        "type": "string",
+                        "enum": [
+                          "MANUAL",
+                          "LEDGER"
+                        ]
+                      },
                       "acknowledgedAt": {
                         "anyOf": [
                           {
@@ -2610,6 +2641,7 @@
                       "plannedStart",
                       "endsAt",
                       "jobId",
+                      "inventoryMode",
                       "acknowledgedAt",
                       "startedAt",
                       "endedAt",
@@ -2963,6 +2995,14 @@
                   "approvalReadiness": {
                     "type": "object",
                     "properties": {
+                      "inventoryMode": {
+                        "default": "MANUAL",
+                        "type": "string",
+                        "enum": [
+                          "MANUAL",
+                          "LEDGER"
+                        ]
+                      },
                       "status": {
                         "type": "string",
                         "enum": [
@@ -3070,6 +3110,7 @@
                       }
                     },
                     "required": [
+                      "inventoryMode",
                       "status",
                       "jobVersion",
                       "policyVersion",

@@ -4,7 +4,7 @@
 
 ServiceGrid IQ is a field-service preparation tool that helps dispatchers identify missing job information, check technician eligibility, confirm required-part readiness, and approve assignments with clear explanations. Technicians receive preparation cards and record visit outcomes, including linked follow-ups.
 
-**Status: Phase 9 local knowledge layer implemented; AWS and real provider validation deferred.** Phases 1–7 provide the core dispatch/visit workflow, CSV onboarding and reports. Phase 8 adds verified local monitoring, encrypted restoration, immutable-image recovery and load rehearsals, with hosted pilot gates still open. Phase 9 adds private reviewed manuals, ingestion workers and cited evidence on desktop/mobile web. OpenAI integration is prepared; add your own key/model and evaluate it before relying on AI output. Transactional inventory is Phase 10.
+**Status: Phases 1â€“10 implemented locally; hosted pilot gates and real paid-provider evaluation remain open.** Core dispatch, visits, CSV onboarding and reporting are joined by local operations/recovery rehearsals (Phase 8), private reviewed manuals and cited evidence with optional OpenAI integration (Phase 9), and protected stock reservations/consumption (Phase 10). Add your own OpenAI key/model locally before evaluating AI output. AWS remains deferred.
 
 ## The problem we are testing
 
@@ -21,7 +21,7 @@ The initial candidate customer is a commercial HVAC or AC maintenance company wi
 5. Let the assigned technician acknowledge, start, and close the visit.
 6. Create a linked follow-up when needed and review its recorded reason.
 
-The pilot uses **timestamped manual parts confirmation**, not protected stock reservations. Transactional inventory and cited AI preparation are later extensions. The pilot will be online-only; a responsive technician interface does not imply offline support.
+MANUAL parts confirmation remains the default. Owners can enable **LEDGER mode** for protected required-part allocations and actual consumption; existing manual assignments retain their mode. Private reviewed manuals provide cited preparation evidence. The app is online-only responsive web, including the technician experience; native/offline mobile is not implemented.
 
 ## Documentation
 
@@ -29,18 +29,19 @@ The pilot uses **timestamped manual parts confirmation**, not protected stock re
 | --- | --- |
 | [Build blueprint v2 â€” Markdown](docs/architecture/ServiceGrid_IQ_Build_Blueprint_v2.md) Â· [PDF](docs/architecture/ServiceGrid_IQ_Build_Blueprint_v2.pdf) | Product boundaries, policies, lifecycle, data model, architecture, security, and acceptance criteria |
 | [Phase-wise build plan â€” Markdown](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md) Â· [PDF](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.pdf) | Detailed tasks, estimates, completion gates, and extension phases |
-| [Pilot OpenAPI contract](docs/api/ServiceGrid_IQ_Pilot_OpenAPI_v2.json) | OpenAPI 3.1 contract with 52 proposed operations; no backend implementation supplied |
+| [Pilot OpenAPI contract](docs/api/ServiceGrid_IQ_Pilot_OpenAPI_v2.json) | Original proposed contract; implemented phase contracts below take precedence |
 | [Phase 2 API contract](docs/api/phase-2-openapi.json) | Implemented OIDC/session, membership, invitation and audit endpoints |
-| [Phase 9 knowledge API](docs/api/phase-9-openapi.json) · [walkthrough](docs/operations/phase-9-local.md) | Private manual review, ingestion, cited retrieval and optional OpenAI configuration |
-| [Phase 8 runbook](docs/operations/phase-8-runbook.md) · [verification](docs/plans/phase-8-checklist.md) | Local recovery, monitoring and load evidence; remaining hosted pilot gates |
+| [Phase 10 stock API](docs/api/phase-10-openapi.json) Â· [walkthrough](docs/operations/phase-10-local.md) Â· [verification](docs/plans/phase-10-checklist.md) | Optional protected inventory, actual consumption, returns and reconciliation |
+| [Phase 9 knowledge API](docs/api/phase-9-openapi.json) Â· [walkthrough](docs/operations/phase-9-local.md) | Private manual review, ingestion, cited retrieval and optional OpenAI configuration |
+| [Phase 8 runbook](docs/operations/phase-8-runbook.md) Â· [verification](docs/plans/phase-8-checklist.md) | Local recovery, monitoring and load evidence; remaining hosted pilot gates |
 | [Phase 7 API contract](docs/api/phase-7-openapi.json) | Implemented CSV reviews/commits, exports, reporting and audit |
-| [Phase 7 walkthrough](docs/operations/phase-7-local.md) · [checklist](docs/plans/phase-7-checklist.md) | Load fictional records and inspect operational results |
+| [Phase 7 walkthrough](docs/operations/phase-7-local.md) Â· [checklist](docs/plans/phase-7-checklist.md) | Load fictional records and inspect operational results |
 | [Phase 6 API contract](docs/api/phase-6-openapi.json) | Implemented technician visits, outcomes, follow-ups and lifecycle actions |
-| [Phase 6 walkthrough](docs/operations/phase-6-local.md) · [checklist](docs/plans/phase-6-checklist.md) | Try the complete local dispatcher-to-technician workflow |
+| [Phase 6 walkthrough](docs/operations/phase-6-local.md) Â· [checklist](docs/plans/phase-6-checklist.md) | Try the complete local dispatcher-to-technician workflow |
 | [Phase 5 API contract](docs/api/phase-5-openapi.json) | Implemented preparation, live readiness, ranking and approved assignment |
-| [Phase 5 walkthrough](docs/operations/phase-5-local.md) · [checklist](docs/plans/phase-5-checklist.md) | Prepare a job, resolve gaps and approve an eligible technician |
+| [Phase 5 walkthrough](docs/operations/phase-5-local.md) Â· [checklist](docs/plans/phase-5-checklist.md) | Prepare a job, resolve gaps and approve an eligible technician |
 | [Phase 4 API contract](docs/api/phase-4-openapi.json) | Implemented workforce, scheduling policy and eligibility endpoints |
-| [Phase 4 walkthrough](docs/operations/phase-4-local.md) · [checklist](docs/plans/phase-4-checklist.md) | Try qualification verification, availability and appointment checks |
+| [Phase 4 walkthrough](docs/operations/phase-4-local.md) Â· [checklist](docs/plans/phase-4-checklist.md) | Try qualification verification, availability and appointment checks |
 | [Phase 3 API contract](docs/api/phase-3-openapi.json) | Implemented customer, site, equipment and job-intake endpoints |
 | [Phase 3 checklist](docs/plans/phase-3-checklist.md) | Local completion evidence and remaining deployment gate |
 | [Phase 3 walkthrough](docs/operations/phase-3-local.md) | Try customer-to-job intake, triage and edit conflicts |

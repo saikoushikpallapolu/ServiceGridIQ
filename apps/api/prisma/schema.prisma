@@ -32,6 +32,7 @@ model Organization {
   externalRecords ExternalRecord[]
   manuals ManualDocument[]
   providerUsage ProviderUsage[]
+  inventoryPolicy InventoryPolicy?
 
   @@map("organizations")
 }
@@ -79,6 +80,7 @@ model Membership {
   reportExclusions ReportExclusion[]
   uploadedManuals ManualDocument[] @relation("ManualUploader")
   approvedManuals ManualDocument[] @relation("ManualApprover")
+  stockMovements StockMovement[]
   @@unique([organizationId, userId])
   @@unique([organizationId, id])
   @@map("memberships")
@@ -544,6 +546,7 @@ model Part {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   requirements JobPart[]
   observations VisitObservation[]
+  balances StockBalance[]
   @@unique([organizationId, id])
   @@unique([organizationId, sku])
   @@map("parts")
@@ -558,6 +561,7 @@ model StockLocation {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   branch Branch @relation(fields: [organizationId, branchId], references: [organizationId, id], onDelete: Restrict)
   requirements JobPart[]
+  balances StockBalance[]
   @@unique([organizationId, id])
   @@unique([organizationId, branchId, name])
   @@map("stock_locations")
@@ -577,7 +581,9 @@ model JobPart {
   part Part @relation(fields: [organizationId, partId], references: [organizationId, id], onDelete: Restrict)
   location StockLocation @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
   confirmations PartConfirmation[]
+  allocations StockAllocation[]
   @@unique([organizationId, id])
+  @@unique([organizationId, jobId, id, partId, locationId])
   @@unique([organizationId, jobId, partId, locationId])
   @@map("job_parts")
 }
@@ -644,6 +650,8 @@ model Assignment {
   rankingSnapshot Json @map("ranking_snapshot")
   approvalReason String @map("approval_reason")
   active Boolean @default(true)
+  inventoryMode String @default("MANUAL") @map("inventory_mode")
+  stockAllocations StockAllocation[]
   acknowledgedAt DateTime? @map("acknowledged_at") @db.Timestamptz(3)
   startedAt DateTime? @map("started_at") @db.Timestamptz(3)
   endedAt DateTime? @map("ended_at") @db.Timestamptz(3)
@@ -663,6 +671,76 @@ model Assignment {
   @@unique([organizationId, jobId, technicianId, reservationId])
   @@index([organizationId, technicianId, resolvedAt])
   @@map("assignments")
+}
+
+model InventoryPolicy {
+  organizationId String @id @map("organization_id") @db.Uuid
+  enabled Boolean @default(false)
+  version Int @default(1)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  @@map("inventory_policies")
+}
+
+model StockBalance {
+  organizationId String @map("organization_id") @db.Uuid
+  partId String @map("part_id") @db.Uuid
+  locationId String @map("location_id") @db.Uuid
+  onHand Decimal @default(0) @map("on_hand") @db.Decimal(12,3)
+  reserved Decimal @default(0) @db.Decimal(12,3)
+  version Int @default(0)
+  part Part @relation(fields: [organizationId, partId], references: [organizationId, id], onDelete: Restrict)
+  location StockLocation @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  movements StockMovement[]
+  allocations StockAllocation[]
+  @@id([organizationId, partId, locationId])
+  @@map("stock_balances")
+}
+
+model StockAllocation {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  jobId String @map("job_id") @db.Uuid
+  assignmentId String @map("assignment_id") @db.Uuid
+  jobPartId String @map("job_part_id") @db.Uuid
+  partId String @map("part_id") @db.Uuid
+  locationId String @map("location_id") @db.Uuid
+  quantity Decimal @db.Decimal(12,3)
+  consumed Decimal @default(0) @db.Decimal(12,3)
+  state String @default("ACTIVE")
+  assignment Assignment @relation(fields: [organizationId, jobId, assignmentId], references: [organizationId, jobId, id], onDelete: Restrict)
+  requirement JobPart @relation(fields: [organizationId, jobId, jobPartId, partId, locationId], references: [organizationId, jobId, id, partId, locationId], onDelete: Restrict)
+  balance StockBalance @relation(fields: [organizationId, partId, locationId], references: [organizationId, partId, locationId], onDelete: Restrict)
+  movements StockMovement[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, assignmentId, jobPartId])
+  @@index([organizationId, jobId])
+  @@map("stock_allocations")
+}
+
+model StockMovement {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  actorMembershipId String @map("actor_membership_id") @db.Uuid
+  partId String @map("part_id") @db.Uuid
+  locationId String @map("location_id") @db.Uuid
+  allocationId String? @map("allocation_id") @db.Uuid
+  returnOfId String? @map("return_of_id") @db.Uuid
+  kind String
+  deltaOnHand Decimal @map("delta_on_hand") @db.Decimal(12,3)
+  deltaReserved Decimal @map("delta_reserved") @db.Decimal(12,3)
+  balanceVersion Int @map("balance_version")
+  note String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  actor Membership @relation(fields: [organizationId, actorMembershipId], references: [organizationId, id], onDelete: Restrict)
+  balance StockBalance @relation(fields: [organizationId, partId, locationId], references: [organizationId, partId, locationId], onDelete: Restrict)
+  allocation StockAllocation? @relation(fields: [organizationId, allocationId], references: [organizationId, id], onDelete: Restrict)
+  original StockMovement? @relation("StockReturns", fields: [organizationId, returnOfId], references: [organizationId, id], onDelete: Restrict)
+  returns StockMovement[] @relation("StockReturns")
+  @@unique([organizationId, id])
+  @@unique([organizationId, partId, locationId, balanceVersion])
+  @@index([organizationId, createdAt, id])
+  @@index([organizationId, returnOfId])
+  @@map("stock_movements")
 }
 
 model IdempotencyRecord {

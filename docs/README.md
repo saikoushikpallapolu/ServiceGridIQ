@@ -17,7 +17,7 @@ Markdown files are editable document sources. Refresh their PDF companions and i
 
 ## Status
 
-The repository now includes the Phase 1 frontend, health API, PostgreSQL foundation migration and seeds, local Docker services, CI, and AWS staging templates. Phase 2 adds local OIDC authentication, server-side sessions, company selection, roles, invitations and audit. Phase 3 implements customer/site/equipment records and versioned draft intake, job filtering, triage, timeline and equipment history. Phases 4–6 extend this foundation with scheduling, readiness, assignment and technician execution; see their current records below. The pilot OpenAPI file remains a future contract; the implemented authentication subset has its own contract. The owner explicitly deferred AWS staging to continue local development through Phase 3. See [local setup](operations/local-development.md), [AWS setup](operations/aws-staging.md), and [accepted decisions](architecture/0001-phase-1-foundation.md).
+The repository now includes the Phase 1 frontend, health API, PostgreSQL foundation migration and seeds, local Docker services, CI, and AWS staging templates. Phase 2 adds local OIDC authentication, server-side sessions, company selection, roles, invitations and audit. Phase 3 implements customer/site/equipment records and versioned draft intake, job filtering, triage, timeline and equipment history. Phases 4â€“6 extend this foundation with scheduling, readiness, assignment and technician execution; see their current records below. The pilot OpenAPI file remains a future contract; the implemented authentication subset has its own contract. The owner explicitly deferred AWS staging to continue local development through Phase 3. See [local setup](operations/local-development.md), [AWS setup](operations/aws-staging.md), and [accepted decisions](architecture/0001-phase-1-foundation.md).
 
 The [Phase 2 checklist](plans/phase-2-checklist.md) tracks current authentication completion.
 
@@ -34,3 +34,5 @@ Phase 7 adds [reviewed onboarding and descriptive reporting](architecture/0007-o
 Phase 8 adds the [operating/recovery runbook](operations/phase-8-runbook.md) and [local verification record](plans/phase-8-checklist.md). The local foundation is verified separately from the remaining AWS, TLS, alert-delivery and pilot-partner gates.
 
 Phase 9 adds [private manual ingestion and cited preparation](operations/phase-9-local.md), the [implemented API contract](api/phase-9-openapi.json) and [verification record](plans/phase-9-checklist.md). OpenAI key/model configuration and real paid-provider evaluation remain separate gates.
+
+Phase 10 adds the [protected stock ledger and consumption walkthrough](operations/phase-10-local.md), [implemented stock API contract](api/phase-10-openapi.json) and [verification record](plans/phase-10-checklist.md). It extends the manual pilot with optional protected allocations; no live vendor integration is claimed.

@@ -4,6 +4,7 @@ import { reject } from '../auth/errors.js';
 import { audit, intakeWrite } from '../intake/service.js';
 import { eligibility, reserveEligibleSlot } from '../scheduling/service.js';
 import { confirmationCurrent, MANUAL_PARTS_NOTICE, organizationDay, overallReadiness, rankingFeatures, workload, type Check } from './policy.js';
+import { reserveRequiredParts } from '../inventory/ledger.js';
 
 export const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonObject;
 export async function editableJob(tx: Prisma.TransactionClient, organizationId: string, jobId: string, version: number) {
@@ -21,12 +22,14 @@ export async function preparationChanged(tx: Prisma.TransactionClient, actor: Me
   await audit(tx, actor, action, jobId, { ...details, version: updated.version }); return { jobVersion: updated.version };
 }
 export async function readiness(tx: Prisma.TransactionClient, organizationId: string, jobId: string, now = new Date()) {
-  const job = await tx.job.findUnique({ where: { organizationId_id: { organizationId, id: jobId } }, include: { organization: true, site: true, equipment: true, scheduling: { include: { requirements: true } },
+  const job = await tx.job.findUnique({ where: { organizationId_id: { organizationId, id: jobId } }, include: { organization: { include: { inventoryPolicy: true } }, assignments: { orderBy: [{ active: 'desc' }, { approvedAt: 'desc' }], take: 1 }, site: true, equipment: true, scheduling: { include: { requirements: true } },
     partRequirements: { include: { part: true, location: true, confirmations: { orderBy: [{ recordedJobVersion: 'desc' }, { id: 'desc' }], take: 1, include: { actor: { include: { user: true } } } } } },
     prerequisites: { include: { evidence: { orderBy: [{ recordedJobVersion: 'desc' }, { id: 'desc' }], take: 1, include: { actor: { include: { user: true } } } } } } } });
   if (!job) return reject(404, 'NOT_FOUND', 'Job not found');
   const acknowledgments = job.warningAcknowledgments as Record<string, { reason: string }>;
   const checks: Check[] = [];
+  const existingAssignment = !['DRAFT', 'TRIAGED', 'READY'].includes(job.status) ? job.assignments[0] : undefined;
+  const ledgerMode = existingAssignment ? existingAssignment.inventoryMode === 'LEDGER' : job.organization.inventoryPolicy?.enabled === true;
   const add = (code: string, status: Check['status'], severity: Check['severity'], message: string, evidenceId: string | null = null, verifiedBy: string | null = null, verifiedAt: Date | null = null) => checks.push({ code, status, severity, message, evidenceId, verifiedBy, verifiedAt: verifiedAt?.toISOString() ?? null, acknowledged: severity === 'WARNING' && !!acknowledgments[code]?.reason });
   add('INTAKE', job.complaint.trim() && job.serviceCategory.trim() && job.site.address.trim() ? 'PASS' : 'FAIL', 'BLOCKER', 'Complaint, service category, equipment and site address must be recorded.');
   add('TRIAGED', ['TRIAGED', 'READY', 'ASSIGNED', 'ACKNOWLEDGED', 'IN_PROGRESS', 'CLOSED'].includes(job.status) ? 'PASS' : 'FAIL', 'BLOCKER', 'Intake must be triaged before approval.');
@@ -37,6 +40,13 @@ export async function readiness(tx: Prisma.TransactionClient, organizationId: st
   add('PREREQUISITES_REVIEW', job.prerequisitesReviewed ? 'PASS' : 'UNKNOWN', 'BLOCKER', 'A dispatcher must explicitly review safety and access prerequisites.');
   for (const part of job.partRequirements) {
     if (part.state === 'NOT_NEEDED') continue;
+    if (ledgerMode) {
+      const balance = await tx.stockBalance.findUnique({ where: { organizationId_partId_locationId: { organizationId, partId: part.partId, locationId: part.locationId } } });
+      const allocation = existingAssignment ? await tx.stockAllocation.findFirst({ where: { organizationId, assignmentId: existingAssignment.id, jobPartId: part.id } }) : null;
+      const owned = allocation ? allocation.state === 'RELEASED' ? allocation.consumed : allocation.quantity : new Prisma.Decimal(0);
+      const sufficient = !!balance && balance.onHand.sub(balance.reserved).add(owned).gte(part.quantity);
+      add(`PART:${part.id}`, sufficient ? 'PASS' : balance ? 'FAIL' : 'UNKNOWN', part.state === 'REQUIRED' ? 'BLOCKER' : 'WARNING', `${part.state}: ${part.part.name}, ${part.quantity.toString()} ${part.part.unit} at ${part.location.name}. Ledger-backed availability${existingAssignment ? ' including this visit allocation/recorded consumption' : ''}; only REQUIRED quantities are protected at assignment.`); continue;
+    }
     const evidence = part.confirmations[0] ?? null;
     const current = confirmationCurrent({ revision: part.revision, visitRevision: job.visitRevision, plannedStart: planned, hours: job.organization.partsFreshnessHours, now, confirmation: evidence });
     add(`PART:${part.id}`, current ? 'PASS' : evidence?.status === 'UNAVAILABLE' ? 'FAIL' : 'UNKNOWN', part.state === 'REQUIRED' ? 'BLOCKER' : 'WARNING', `${part.state}: ${part.part.name}, ${part.quantity.toString()} ${part.part.unit}, at ${part.location.name}. Current positive manual confirmation is required for REQUIRED parts.`, evidence?.id ?? null, evidence?.actor.user.name ?? null, evidence?.confirmedAt ?? null);
@@ -46,7 +56,7 @@ export async function readiness(tx: Prisma.TransactionClient, organizationId: st
     const current = !!evidence && !!planned && evidence.plannedStart.getTime() === planned.getTime() && evidence.visitRevision === job.visitRevision && evidence.verifiedAt <= now;
     add(`PREREQUISITE:${prerequisite.id}`, current ? evidence.status as Check['status'] : 'UNKNOWN', 'BLOCKER', `${prerequisite.kind}: ${prerequisite.label}. ${prerequisite.rationale}`, evidence?.id ?? null, evidence?.actor.user.name ?? null, evidence?.verifiedAt ?? null);
   }
-  return { job, result: { status: overallReadiness(checks), jobVersion: job.version, policyVersion: job.organization.preparationPolicyVersion, evaluatedAt: now.toISOString(), plannedStart: planned?.toISOString() ?? null, checks, manualPartsNotice: MANUAL_PARTS_NOTICE } };
+  return { job, result: { inventoryMode: ledgerMode ? 'LEDGER' as const : 'MANUAL' as const, status: overallReadiness(checks), jobVersion: job.version, policyVersion: job.organization.preparationPolicyVersion, evaluatedAt: now.toISOString(), plannedStart: planned?.toISOString() ?? null, checks, manualPartsNotice: ledgerMode ? 'Ledger-backed REQUIRED parts are reserved atomically at assignment. Suspected parts are advisory; physical stock accuracy still requires reconciliation.' : MANUAL_PARTS_NOTICE } };
 }
 export async function rankTechnicians(tx: Prisma.TransactionClient, organizationId: string, jobId: string, version: number) {
   const ready = await readiness(tx, organizationId, jobId);
@@ -82,7 +92,9 @@ export async function approveAssignment(db: PrismaClient, actor: Membership, job
     const ranking = await rankTechnicians(tx, organizationId, jobId, input.version);
     if (!ranking.candidates.find((item) => item.technicianId === input.technicianId)?.eligible) return reject(409, 'INELIGIBLE', 'Selected technician is not currently eligible');
     const reservation = await reserveEligibleSlot(tx, organizationId, jobId, input.version, current.job.plannedStart!, input.technicianId);
-    const assignment = await tx.assignment.create({ data: { organizationId, jobId, technicianId: input.technicianId, reservationId: reservation.id, approvedByMembershipId: actor.id, approvalReason: input.approvalReason, readinessSnapshot: json(current.result), rankingSnapshot: json(ranking) } });
+    const ledgerMode = current.job.organization.inventoryPolicy?.enabled === true;
+    const assignment = await tx.assignment.create({ data: { organizationId, jobId, technicianId: input.technicianId, reservationId: reservation.id, approvedByMembershipId: actor.id, approvalReason: input.approvalReason, readinessSnapshot: json(current.result), rankingSnapshot: json(ranking), inventoryMode: ledgerMode ? 'LEDGER' : 'MANUAL' } });
+    if (ledgerMode) await reserveRequiredParts(tx, actor, jobId, assignment.id);
     const updated = await tx.job.update({ where: { id: jobId }, data: { status: 'ASSIGNED', version: { increment: 1 } } });
     await tx.jobEvent.create({ data: { organizationId, jobId, actorMembershipId: actor.id, kind: 'JOB_ASSIGNED', note: input.approvalReason, details: { assignmentId: assignment.id, technicianId: input.technicianId, version: updated.version } } });
     await audit(tx, actor, 'JOB_ASSIGNED', jobId, { assignmentId: assignment.id, technicianId: input.technicianId, version: updated.version });

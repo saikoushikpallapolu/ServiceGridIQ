@@ -13,6 +13,7 @@ import { createDispatchRouter } from '../dispatch/router.js';
 import { createVisitRouter } from '../visits/router.js';
 import { createOnboardingRouter } from '../onboarding/router.js';
 import { createKnowledgeRouter } from '../knowledge/router.js';
+import { createInventoryRouter } from '../inventory/router.js';
 import type { KnowledgeDependencies } from '../knowledge/dependencies.js';
 import { context, type Context } from './context.js';
 
@@ -167,6 +168,7 @@ export function createAuthRouter(database: PrismaClient, config: Config, provide
   });
 
   router.use('/v1', requireTenant);
+  router.use('/v1', createInventoryRouter(database, requireCsrf));
   router.use('/v1', createKnowledgeRouter(database, requireCsrf, knowledge));
   router.use('/v1', createOnboardingRouter(database, requireCsrf));
   router.use('/v1', createVisitRouter(database, requireCsrf));

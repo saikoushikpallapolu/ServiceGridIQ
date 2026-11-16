@@ -3422,6 +3422,14 @@
       "Readiness": {
         "type": "object",
         "properties": {
+          "inventoryMode": {
+            "default": "MANUAL",
+            "type": "string",
+            "enum": [
+              "MANUAL",
+              "LEDGER"
+            ]
+          },
           "status": {
             "type": "string",
             "enum": [
@@ -3529,6 +3537,7 @@
           }
         },
         "required": [
+          "inventoryMode",
           "status",
           "jobVersion",
           "policyVersion",
@@ -3559,6 +3568,14 @@
           "readiness": {
             "type": "object",
             "properties": {
+              "inventoryMode": {
+                "default": "MANUAL",
+                "type": "string",
+                "enum": [
+                  "MANUAL",
+                  "LEDGER"
+                ]
+              },
               "status": {
                 "type": "string",
                 "enum": [
@@ -3666,6 +3683,7 @@
               }
             },
             "required": [
+              "inventoryMode",
               "status",
               "jobVersion",
               "policyVersion",
