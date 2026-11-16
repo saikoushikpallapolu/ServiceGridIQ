@@ -54,7 +54,9 @@ test('stale browser edits are preserved and latest changes can be reloaded', asy
   const created = await page.request.post('/api/v1/jobs', { headers, data: input }); expect(created.status()).toBe(201);
   const job = await created.json() as { id: string };
   await page.getByLabel('Search jobs', { exact: true }).fill(marker); await page.getByRole('button', { name: 'Search', exact: true }).click();
-  await page.locator('.job-card').click(); await page.getByRole('button', { name: 'Edit draft', exact: true }).click();
+  const filteredJob = page.locator('.job-card').filter({ hasText: marker });
+  await expect(filteredJob).toHaveCount(1);
+  await filteredJob.click(); await page.getByRole('button', { name: 'Edit draft', exact: true }).click();
   await page.getByLabel('Complaint', { exact: true }).fill('My unsaved correction');
   expect((await page.request.patch(`/api/v1/jobs/${job.id}`, { headers, data: { ...input, complaint: 'Other dispatcher correction', version: 1 } })).status()).toBe(200);
   await page.getByRole('button', { name: 'Save draft changes', exact: true }).click();
