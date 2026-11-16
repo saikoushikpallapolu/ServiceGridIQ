@@ -1,3 +1,4 @@
+import { openWorkspace } from './workspace-navigation';
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
@@ -21,6 +22,7 @@ test('real OIDC login, company selection and cross-company protection', async ({
   expect(cookie?.httpOnly).toBe(true);
   expect(cookie?.sameSite).toBe('Lax');
   await page.getByRole('button', { name: /Fictional Cooling Alpha/ }).click();
+  await openWorkspace(page, 'Team & access');
   await expect(page.getByRole('heading', { name: 'People in this company' })).toBeVisible();
   const forbidden = await page.request.get(`/api/v1/organizations/${beta}`, { headers: { 'X-Organization-Id': alpha } });
   expect(forbidden.status()).toBe(404);
@@ -45,6 +47,7 @@ test('technician sees only their company and cannot use owner endpoints on mobil
 test('owner creates a private invitation link and can sign out', async ({ page }) => {
   await signIn(page, 'owner.alpha@example.test');
   await page.getByRole('button', { name: /Fictional Cooling Alpha/ }).click();
+  await openWorkspace(page, 'Team & access');
   await page.getByLabel('Email address', { exact: true }).fill(`browser-${Date.now()}@example.test`);
   await page.getByRole('button', { name: 'Create invitation' }).click();
   await expect(page.getByLabel('Invitation link', { exact: true })).toHaveValue(/#invite=[A-Za-z0-9_-]{43}$/);
@@ -57,6 +60,7 @@ test('owner creates a private invitation link and can sign out', async ({ page }
 test('invited user signs in, accepts the link and joins only the invited company', async ({ page, browser }) => {
   await signIn(page, 'owner.alpha@example.test');
   await page.getByRole('button', { name: /Fictional Cooling Alpha/ }).click();
+  await openWorkspace(page, 'Team & access');
   await page.getByLabel('Email address', { exact: true }).fill('new.member@example.test');
   await page.getByRole('button', { name: 'Create invitation' }).click();
   const link = page.getByLabel('Invitation link', { exact: true });

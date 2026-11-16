@@ -36,3 +36,5 @@ Phase 8 adds the [operating/recovery runbook](operations/phase-8-runbook.md) and
 Phase 9 adds [private manual ingestion and cited preparation](operations/phase-9-local.md), the [implemented API contract](api/phase-9-openapi.json) and [verification record](plans/phase-9-checklist.md). OpenAI key/model configuration and real paid-provider evaluation remain separate gates.
 
 Phase 10 adds the [protected stock ledger and consumption walkthrough](operations/phase-10-local.md), [implemented stock API contract](api/phase-10-openapi.json) and [verification record](plans/phase-10-checklist.md). It extends the manual pilot with optional protected allocations; no live vendor integration is claimed.
+
+The [frontend design record](design/frontend-redesign.md) describes the public website, blue design system, role-aware navigation, accessibility behavior and original image provenance.

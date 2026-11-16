@@ -6,6 +6,8 @@ ServiceGrid IQ is a field-service preparation tool that helps dispatchers identi
 
 **Status: Phases 1–10 implemented locally; hosted pilot gates and real paid-provider evaluation remain open.** Core dispatch, visits, CSV onboarding and reporting are joined by local operations/recovery rehearsals (Phase 8), private reviewed manuals and cited evidence with optional OpenAI integration (Phase 9), and protected stock reservations/consumption (Phase 10). Add your own OpenAI key/model locally before evaluating AI output. AWS remains deferred.
 
+![ServiceGrid IQ public website](docs/design/previews/landing-desktop.png)
+
 ## The problem we are testing
 
 A technician may arrive without useful equipment information, the required qualification, or confirmation of a needed part. The product hypothesis is that an explicit preparation workflow can catch some of these gaps before dispatch and help teams understand why follow-up visits occur.
@@ -31,6 +33,7 @@ MANUAL parts confirmation remains the default. Owners can enable **LEDGER mode**
 | [Phase-wise build plan — Markdown](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md) · [PDF](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.pdf) | Detailed tasks, estimates, completion gates, and extension phases |
 | [Pilot OpenAPI contract](docs/api/ServiceGrid_IQ_Pilot_OpenAPI_v2.json) | Original proposed contract; implemented phase contracts below take precedence |
 | [Phase 2 API contract](docs/api/phase-2-openapi.json) | Implemented OIDC/session, membership, invitation and audit endpoints |
+| [Frontend design](docs/design/frontend-redesign.md) | Blue design system, public landing page, role-aware workspace navigation and mobile layouts |
 | [Phase 10 stock API](docs/api/phase-10-openapi.json) · [walkthrough](docs/operations/phase-10-local.md) · [verification](docs/plans/phase-10-checklist.md) | Optional protected inventory, actual consumption, returns and reconciliation |
 | [Phase 9 knowledge API](docs/api/phase-9-openapi.json) · [walkthrough](docs/operations/phase-9-local.md) | Private manual review, ingestion, cited retrieval and optional OpenAI configuration |
 | [Phase 8 runbook](docs/operations/phase-8-runbook.md) · [verification](docs/plans/phase-8-checklist.md) | Local recovery, monitoring and load evidence; remaining hosted pilot gates |

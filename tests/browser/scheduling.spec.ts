@@ -1,3 +1,4 @@
+import { openWorkspace } from './workspace-navigation';
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
@@ -15,7 +16,7 @@ const mainBranch = '60000000-0000-4000-8000-000000000001';
 async function signIn(page: Page, email: string) {
   const account = accounts.find((item) => item.email === email)!;
   await page.goto('/'); await page.getByRole('link', { name: 'Sign in', exact: true }).click(); await page.locator('#username').fill(email); await page.locator('#password').fill(account.password); await page.locator('#kc-login').click();
-  await page.getByRole('button', { name: /Fictional Cooling Alpha/ }).click(); await expect(page.getByRole('heading', { name: 'Technicians & availability' })).toBeVisible();
+  await page.getByRole('button', { name: /Fictional Cooling Alpha/ }).click(); await openWorkspace(page, 'Workforce'); await expect(page.getByRole('heading', { name: 'Technicians & availability' })).toBeVisible();
 }
 async function createAndOpenJob(page: Page, marker: string) {
   const session = await (await page.request.get('/api/auth/session')).json() as { csrfToken: string };
@@ -23,6 +24,7 @@ async function createAndOpenJob(page: Page, marker: string) {
   const response = await page.request.post('/api/v1/jobs', { headers, data: { customerId: '20000000-0000-4000-8000-000000000001', siteId: '30000000-0000-4000-8000-000000000001', equipmentId: '40000000-0000-4000-8000-000000000001', complaint: marker, priority: 'NORMAL', arrivalStart: '2026-12-01T09:00:00+05:30', arrivalEnd: '2026-12-01T12:00:00+05:30', estimatedDurationMinutes: 60, travelBufferMinutes: 30 } }); expect(response.status()).toBe(201);
   const job = await response.json() as { id: string };
   expect((await page.request.post(`/api/v1/jobs/${job.id}/transitions`, { headers, data: { version: 1, status: 'TRIAGED', reason: '' } })).status()).toBe(200);
+  await openWorkspace(page, 'Dispatch');
   await page.getByLabel('Search jobs', { exact: true }).fill(marker); await page.getByRole('button', { name: 'Search', exact: true }).click();
   await page.locator('.job-card').filter({ hasText: marker }).click(); await expect(page.getByRole('heading', { name: 'Appointment eligibility', exact: true })).toBeVisible();
 }
@@ -71,6 +73,7 @@ test('dispatcher manages an unavailable interval and can preview but cannot veri
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.locator('.eligibility-panel').screenshot({ path: '.data/phase-4-mobile.png' });
   } finally {
+    await openWorkspace(page, 'Workforce');
     const interval = page.locator('.availability-list li').filter({ hasText: reason }); page.once('dialog', (dialog) => void dialog.accept()); await interval.getByRole('button', { name: 'Remove interval', exact: true }).click(); await expect(interval).toHaveCount(0);
   }
 });

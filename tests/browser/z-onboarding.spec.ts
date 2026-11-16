@@ -1,3 +1,4 @@
+import { openWorkspace } from './workspace-navigation';
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 
@@ -6,7 +7,7 @@ const alpha = '00000000-0000-4000-8000-000000000001';
 async function signIn(page: Page, email = 'owner.alpha@example.test') { const account = accounts.find((item) => item.email === email)!; await page.goto('/'); await page.getByRole('link', { name: 'Sign in', exact: true }).click(); await page.locator('#username').fill(email); await page.locator('#password').fill(account.password); await page.locator('#kc-login').click(); await page.getByRole('button', { name: /Fictional Cooling Alpha/ }).click(); await expect(page.getByRole('heading', { name: 'Dispatch workspace', exact: true })).toBeVisible(); }
 
 test('owner reviews row errors, safely retries a committed import and downloads a protected CSV', async ({ page }) => {
-  await signIn(page); const workspace = page.locator('.data-workspace'); await workspace.getByRole('button', { name: 'CSV onboarding', exact: true }).click();
+  await signIn(page); await openWorkspace(page, 'Reports & data'); const workspace = page.locator('.data-workspace'); await workspace.getByRole('button', { name: 'CSV onboarding', exact: true }).click();
   const source = `browser-${Date.now()}`; await workspace.getByLabel('Source system', { exact: true }).fill(source);
   const templateDownload = page.waitForEvent('download'); await workspace.getByRole('button', { name: 'Download template', exact: true }).click(); const template = await templateDownload; expect(readFileSync((await template.path())!, 'utf8')).toContain('external_id');
   await workspace.getByLabel('CSV file', { exact: true }).setInputFiles({ name: 'fictional-invalid.csv', mimeType: 'text/csv', buffer: Buffer.from('external_id,name,email,phone\nc1,Invalid,bad-email,\n') }); await workspace.getByRole('button', { name: 'Run dry run', exact: true }).click(); await expect(workspace.getByRole('heading', { name: 'Import review · INVALID', exact: true })).toBeVisible(); await expect(workspace.getByRole('button', { name: 'Commit reviewed import', exact: true })).toBeDisabled(); await expect(workspace.locator('table')).toContainText('INVALID_VALUE');
@@ -18,7 +19,7 @@ test('owner reviews row errors, safely retries a committed import and downloads 
 });
 
 test('owner reviews report cohorts and audited exclusions on mobile; dispatcher has no owner data tools', async ({ page, browser }) => {
-  await page.setViewportSize({ width: 390, height: 844 }); await signIn(page); const workspace = page.locator('.data-workspace');
+  await page.setViewportSize({ width: 390, height: 844 }); await signIn(page); await openWorkspace(page, 'Reports & data'); const workspace = page.locator('.data-workspace');
   const session = await (await page.request.get('/api/auth/session')).json() as { csrfToken: string }; const headers = { 'X-Organization-Id': alpha, 'X-CSRF-Token': session.csrfToken, Origin: process.env.E2E_BASE_URL ?? 'http://localhost:8080' };
   const created = await page.request.post('/api/v1/jobs', { headers, data: { customerId: '20000000-0000-4000-8000-000000000001', siteId: '30000000-0000-4000-8000-000000000001', equipmentId: '40000000-0000-4000-8000-000000000001', complaint: `Fictional planned multi-visit ${Date.now()}`, priority: 'NORMAL', arrivalStart: '2034-01-01T09:00:00Z', arrivalEnd: '2034-01-01T12:00:00Z', estimatedDurationMinutes: 60, travelBufferMinutes: 30 } }); expect(created.status()).toBe(201); const job = await created.json() as { id: string };
   await workspace.getByRole('button', { name: 'Operational reports', exact: true }).click(); await workspace.getByText('Exclude a planned multi-visit job or correct an exclusion', { exact: true }).click(); await workspace.getByLabel('Report exclusion job ID', { exact: true }).fill(job.id); await workspace.getByRole('button', { name: 'Load exclusion', exact: true }).click(); await workspace.getByLabel('Exclusion reason', { exact: true }).selectOption('PLANNED_MULTI_VISIT'); await workspace.getByLabel('Exclusion review note', { exact: true }).fill('Fictional work agreed as multiple planned visits'); await workspace.getByRole('button', { name: 'Save reporting exclusion', exact: true }).click(); await expect(workspace.getByRole('status')).toContainText('Reporting exclusion saved');
