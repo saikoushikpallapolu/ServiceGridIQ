@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+export const manualUploadSchema = z.object({ title: z.string().trim().min(1).max(160), documentVersion: z.string().trim().min(1).max(80), manufacturer: z.string().trim().min(1).max(120), model: z.string().trim().min(1).max(120), mediaType: z.enum(['application/pdf', 'text/plain']), fileBase64: z.string().min(4).max(6990508) }).strict();
+export const manualReviewSchema = z.object({ revision: z.number().int().positive(), action: z.enum(['APPROVE', 'REVOKE', 'RETRY']), note: z.string().trim().min(1).max(2000), allowExternalAi: z.boolean() }).strict();
+export const preparationEvidenceInputSchema = z.object({ question: z.string().trim().min(3).max(1000), useAi: z.boolean().default(false) }).strict();
+export const manualSchema = z.object({ id: z.uuid(), title: z.string(), documentVersion: z.string(), manufacturerKey: z.string(), modelKey: z.string(), fileHash: z.string(), mediaType: z.string(), bytes: z.number(), status: z.enum(['QUARANTINED', 'QUEUED', 'PROCESSING', 'READY', 'FAILED', 'REVOKED']), revision: z.number().int(), allowExternalAi: z.boolean(), reviewNote: z.string(), failureCode: z.string().nullable(), pages: z.number(), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime() });
+export const preparationEvidenceSchema = z.object({ jobId: z.uuid(), jobVersion: z.number().int(), mode: z.string(), uncertainty: z.string(), gaps: z.array(z.string()), generatedAt: z.iso.datetime(), citations: z.array(z.object({ chunkId: z.uuid(), documentId: z.uuid(), documentVersion: z.string(), revision: z.number().int(), title: z.string(), page: z.number().int(), quote: z.string() })) });
+
 export const importKindSchema = z.enum(['customers', 'sites', 'equipment', 'technicians', 'jobs', 'parts']);
 export const importDryRunInputSchema = z.object({ kind: importKindSchema, sourceSystem: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/), csvBase64: z.string().min(4).max(6990508), mapping: z.record(z.string().min(1).max(80), z.string().min(1).max(160)).default({}) }).strict();
 export const importCommitInputSchema = z.object({ fileHash: z.string().regex(/^[a-f0-9]{64}$/) }).strict();

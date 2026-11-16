@@ -12,6 +12,8 @@ import { createSchedulingRouter } from '../scheduling/router.js';
 import { createDispatchRouter } from '../dispatch/router.js';
 import { createVisitRouter } from '../visits/router.js';
 import { createOnboardingRouter } from '../onboarding/router.js';
+import { createKnowledgeRouter } from '../knowledge/router.js';
+import type { KnowledgeDependencies } from '../knowledge/dependencies.js';
 import { context, type Context } from './context.js';
 
 const uuid = z.uuid();
@@ -30,7 +32,7 @@ function cookie(req: Request, name: string) {
   return /^[A-Za-z0-9_-]{43}$/.test(value) ? value : '';
 }
 
-export function createAuthRouter(database: PrismaClient, config: Config, provider: IdentityProvider) {
+export function createAuthRouter(database: PrismaClient, config: Config, provider: IdentityProvider, knowledge?: KnowledgeDependencies) {
   const router = Router();
   const companies = createCompanyService(database);
   const secure = new URL(config.PUBLIC_ORIGIN).protocol === 'https:';
@@ -165,6 +167,7 @@ export function createAuthRouter(database: PrismaClient, config: Config, provide
   });
 
   router.use('/v1', requireTenant);
+  router.use('/v1', createKnowledgeRouter(database, requireCsrf, knowledge));
   router.use('/v1', createOnboardingRouter(database, requireCsrf));
   router.use('/v1', createVisitRouter(database, requireCsrf));
   router.use('/v1', createDispatchRouter(database, requireCsrf));

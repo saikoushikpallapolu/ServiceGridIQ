@@ -28,7 +28,7 @@ export function createApp(options: { checkDatabase: () => Promise<void>; logLeve
   }));
   const ordinaryJson = express.json({ limit: '32kb' });
   // Large uploads are parsed only after session, tenant, owner and CSRF checks.
-  app.use((req, res, next) => req.method === 'POST' && req.path === '/api/v1/imports/dry-run' ? next() : ordinaryJson(req, res, next));
+  app.use((req, res, next) => req.method === 'POST' && ['/api/v1/imports/dry-run', '/api/v1/knowledge/manuals/upload'].includes(req.path) ? next() : ordinaryJson(req, res, next));
   const tooMany: express.RequestHandler = (req, res) => { res.status(429).json({ error: { code: 'RATE_LIMITED', message: 'Too many requests', traceId: String(req.id) } }); };
   app.use('/api/auth/login', rateLimit({ windowMs: 60_000, limit: 20, standardHeaders: 'draft-8', legacyHeaders: false, handler: tooMany }));
   app.use('/api', rateLimit({ windowMs: 60_000, limit: 1000, standardHeaders: 'draft-8', legacyHeaders: false,

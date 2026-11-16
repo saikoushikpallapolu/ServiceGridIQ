@@ -32,3 +32,5 @@ Phase 6 completes the local core workflow: [technician visit design](architectur
 Phase 7 adds [reviewed onboarding and descriptive reporting](architecture/0007-onboarding-and-reporting.md), [API contract](api/phase-7-openapi.json), [walkthrough](operations/phase-7-local.md), [CSV fixtures](examples/csv/README.md) and [completion checklist](plans/phase-7-checklist.md). Owners can import six datasets, export permitted records, inspect mature cohorts/current gaps and review paginated audit. AWS and the operational pilot gate remain deferred to Phase 8.
 
 Phase 8 adds the [operating/recovery runbook](operations/phase-8-runbook.md) and [local verification record](plans/phase-8-checklist.md). The local foundation is verified separately from the remaining AWS, TLS, alert-delivery and pilot-partner gates.
+
+Phase 9 adds [private manual ingestion and cited preparation](operations/phase-9-local.md), the [implemented API contract](api/phase-9-openapi.json) and [verification record](plans/phase-9-checklist.md). OpenAI key/model configuration and real paid-provider evaluation remain separate gates.

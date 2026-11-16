@@ -5,6 +5,7 @@ import { api, ApiError } from './api';
 import { JobEligibility } from './JobEligibility';
 import { DispatchPreparation } from './DispatchPreparation';
 import { ManagerVisitPanel } from './ManagerVisitPanel';
+import { PreparationEvidence } from './PreparationEvidence';
 import { useUnsavedChanges, confirmDiscard } from './unsaved';
 
 const localTime = (value: string) => { const date = new Date(value); return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16); };
@@ -155,7 +156,7 @@ export function Intake({ session }: { session: Session }) {
         {editing && jobForm(detail)}
         {detail.status === 'TRIAGED' && <form className="intake-form" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); void act(async () => { await api(`/api/v1/jobs/${detail.id}/transitions`, { method: 'POST', body: JSON.stringify({ version: detail.version, status: 'DRAFT', reason: data.get('reason') }) }, session); await openJob(detail.id); refresh(); }); }}><label>Reason to return to draft<textarea name="reason" required maxLength={2000} /></label><button disabled={busy}>Return to draft</button></form>}
         {!editing && ['DRAFT', 'TRIAGED', 'READY'].includes(detail.status) && <JobEligibility key={`eligibility-${detail.id}`} session={session} job={detail} onChanged={async () => { await openJob(detail.id); refresh(); }} />}
-        <>{!editing && <DispatchPreparation key={`preparation-${detail.id}`} session={session} job={detail} onChanged={async () => { await openJob(detail.id); refresh(); }} />}{!editing && <ManagerVisitPanel key={`visit-${detail.id}`} session={session} job={detail} onChanged={async () => { await openJob(detail.id); refresh(); }} onFollowUp={(id) => void act(async () => { await openJob(id); refresh(); })} />}</>
+        <>{!editing && <PreparationEvidence key={`evidence-${detail.id}`} session={session} jobId={detail.id} />}{!editing && <DispatchPreparation key={`preparation-${detail.id}`} session={session} job={detail} onChanged={async () => { await openJob(detail.id); refresh(); }} />}{!editing && <ManagerVisitPanel key={`visit-${detail.id}`} session={session} job={detail} onChanged={async () => { await openJob(detail.id); refresh(); }} onFollowUp={(id) => void act(async () => { await openJob(id); refresh(); })} />}</>
         <h4>Job timeline</h4><ol className="job-timeline">{detail.timeline.map((event) => <li key={event.id}><strong>{event.kind.toLowerCase().replaceAll('_', ' ')}</strong><p className="preserve-lines">{event.note}</p><small>{event.actorName} · {when(event.createdAt)}</small></li>)}</ol><p className="field-help">Most recent 100 changes. The full audit remains in the database.</p>
         <h4>Other service requests for this equipment</h4>{detail.equipmentHistory.length ? <ul className="equipment-history">{detail.equipmentHistory.map((job) => <li key={job.id}><button onClick={() => void act(async () => { if (!confirmDiscard()) return; await openJob(job.id); })}>{job.complaint} · {job.status} · {when(job.createdAt)}</button></li>)}</ul> : <p>No earlier or other service requests recorded.</p>}<p className="field-help">Shows the newest 20 other requests, including drafts. Open a request and its visit activity to review recorded outcomes.</p>
       </article>}

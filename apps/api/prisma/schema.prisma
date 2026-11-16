@@ -30,6 +30,8 @@ model Organization {
   skills Skill[]
   importBatches ImportBatch[]
   externalRecords ExternalRecord[]
+  manuals ManualDocument[]
+  providerUsage ProviderUsage[]
 
   @@map("organizations")
 }
@@ -75,9 +77,74 @@ model Membership {
   visitClosures VisitClosure[]
   importBatches ImportBatch[]
   reportExclusions ReportExclusion[]
+  uploadedManuals ManualDocument[] @relation("ManualUploader")
+  approvedManuals ManualDocument[] @relation("ManualApprover")
   @@unique([organizationId, userId])
   @@unique([organizationId, id])
   @@map("memberships")
+}
+
+model ManualDocument {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  uploadedById String @map("uploaded_by_id") @db.Uuid
+  approvedById String? @map("approved_by_id") @db.Uuid
+  title String
+  documentVersion String @map("document_version")
+  manufacturerKey String @map("manufacturer_key")
+  modelKey String @map("model_key")
+  objectKey String @unique @map("object_key")
+  fileHash String @map("file_hash")
+  mediaType String @map("media_type")
+  bytes Int
+  status String @default("QUARANTINED")
+  revision Int @default(1)
+  allowExternalAi Boolean @default(false) @map("allow_external_ai")
+  reviewNote String @default("") @map("review_note")
+  failureCode String? @map("failure_code")
+  pages Int @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  uploader Membership @relation("ManualUploader", fields: [organizationId, uploadedById], references: [organizationId, id], onDelete: Restrict)
+  approver Membership? @relation("ManualApprover", fields: [organizationId, approvedById], references: [organizationId, id], onDelete: Restrict)
+  chunks ManualChunk[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, manufacturerKey, modelKey, title, documentVersion])
+  @@index([organizationId, status])
+  @@map("manual_documents")
+}
+
+model ManualChunk {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  documentId String @map("document_id") @db.Uuid
+  revision Int
+  ordinal Int
+  page Int
+  content String
+  embedding Unsupported("vector(1536)")?
+  embeddingModel String? @map("embedding_model")
+  search Unsupported("tsvector")?
+  document ManualDocument @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: Cascade)
+  @@unique([organizationId, id])
+  @@unique([organizationId, documentId, revision, ordinal])
+  @@map("manual_chunks")
+}
+
+model ProviderUsage {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  purpose String
+  model String
+  reservedTokens Int @map("reserved_tokens")
+  inputTokens Int @default(0) @map("input_tokens")
+  outputTokens Int @default(0) @map("output_tokens")
+  status String @default("RESERVED")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  @@index([organizationId, createdAt])
+  @@map("provider_usage")
 }
 
 enum JobStatus {

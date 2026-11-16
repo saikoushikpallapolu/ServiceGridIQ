@@ -38,4 +38,9 @@ if (!existsSync(credentialsPath) && !existsSync(realmPath)) {
 } else if (!existsSync(credentialsPath) || !existsSync(realmPath)) {
   throw new Error('Local identity files are incomplete. Restore .data from your local backup; do not reset an existing identity volume silently.');
 }
+for (const key of ['S3_ACCESS_KEY', 'S3_SECRET_KEY', 'REDIS_PASSWORD']) if (!new RegExp(`^${key}=`, 'm').test(readFileSync(envPath, 'utf8'))) appendFileSync(envPath, `${key}=${randomBytes(24).toString('hex')}\n`);
+const extended = Object.fromEntries(readFileSync(envPath, 'utf8').split(/\r?\n/).filter((line) => line.includes('=') && !line.startsWith('#')).map((line) => { const i = line.indexOf('='); return [line.slice(0, i), line.slice(i + 1)]; }));
+mkdirSync(resolve(root, '.data/storage'), { recursive: true });
+writeFileSync(resolve(root, '.data/storage/s3.json'), JSON.stringify({ identities: [{ name: 'servicegrid-local', credentials: [{ accessKey: extended.S3_ACCESS_KEY, secretKey: extended.S3_SECRET_KEY }], actions: ['Admin', 'Read', 'List', 'Write', 'Tagging'] }] }), { mode: 0o644 });
+for (const [key, value] of Object.entries({ S3_ACCESS_KEY: extended.S3_ACCESS_KEY, S3_SECRET_KEY: extended.S3_SECRET_KEY, S3_ENDPOINT: 'http://localhost:9000', S3_BUCKET: 'servicegrid-manuals', REDIS_URL: `redis://:${extended.REDIS_PASSWORD}@localhost:6379` })) if (!new RegExp(`^${key}=`, 'm').test(readFileSync(apiPath, 'utf8'))) appendFileSync(apiPath, `${key}=${value}\n`);
 console.log('Local environment files are ready. Existing files were preserved; credentials were not printed.');

@@ -4,7 +4,7 @@
 
 ServiceGrid IQ is a field-service preparation tool that helps dispatchers identify missing job information, check technician eligibility, confirm required-part readiness, and approve assignments with clear explanations. Technicians receive preparation cards and record visit outcomes, including linked follow-ups.
 
-**Status: Phase 7 local onboarding and reporting implemented; AWS staging explicitly deferred.** The core dispatcher-to-technician workflow supports intake, preparation, approved assignment, visit execution and linked follow-ups. Owners can now review and atomically commit CSVs, export records, inspect defined operational metrics and audit history. Hosted deployment, recovery, monitoring and controlled-pilot safeguards remain Phase 8. Customer benefit and production readiness still need validation.
+**Status: Phase 9 local knowledge layer implemented; AWS and real provider validation deferred.** Phases 1–7 provide the core dispatch/visit workflow, CSV onboarding and reports. Phase 8 adds verified local monitoring, encrypted restoration, immutable-image recovery and load rehearsals, with hosted pilot gates still open. Phase 9 adds private reviewed manuals, ingestion workers and cited evidence on desktop/mobile web. OpenAI integration is prepared; add your own key/model and evaluate it before relying on AI output. Transactional inventory is Phase 10.
 
 ## The problem we are testing
 
@@ -31,6 +31,8 @@ The pilot uses **timestamped manual parts confirmation**, not protected stock re
 | [Phase-wise build plan â€” Markdown](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md) Â· [PDF](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.pdf) | Detailed tasks, estimates, completion gates, and extension phases |
 | [Pilot OpenAPI contract](docs/api/ServiceGrid_IQ_Pilot_OpenAPI_v2.json) | OpenAPI 3.1 contract with 52 proposed operations; no backend implementation supplied |
 | [Phase 2 API contract](docs/api/phase-2-openapi.json) | Implemented OIDC/session, membership, invitation and audit endpoints |
+| [Phase 9 knowledge API](docs/api/phase-9-openapi.json) · [walkthrough](docs/operations/phase-9-local.md) | Private manual review, ingestion, cited retrieval and optional OpenAI configuration |
+| [Phase 8 runbook](docs/operations/phase-8-runbook.md) · [verification](docs/plans/phase-8-checklist.md) | Local recovery, monitoring and load evidence; remaining hosted pilot gates |
 | [Phase 7 API contract](docs/api/phase-7-openapi.json) | Implemented CSV reviews/commits, exports, reporting and audit |
 | [Phase 7 walkthrough](docs/operations/phase-7-local.md) · [checklist](docs/plans/phase-7-checklist.md) | Load fictional records and inspect operational results |
 | [Phase 6 API contract](docs/api/phase-6-openapi.json) | Implemented technician visits, outcomes, follow-ups and lifecycle actions |

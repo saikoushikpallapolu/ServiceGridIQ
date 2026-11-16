@@ -1,0 +1,10 @@
+import { expect, it } from 'vitest';
+import { chunkPages, validateManual, fileHash, extractPages } from './extract.js';
+it('validates manual type, UTF-8, byte bounds and nonempty text before indexing', () => { validateManual(Buffer.from('Fictional manual'), 'text/plain'); for (const [bytes, type] of [[Buffer.from('not PDF'), 'application/pdf'], [Buffer.from([255]), 'text/plain'], [Buffer.from('\0'), 'text/plain'], [Buffer.from('abc'), 'application/javascript'], [Buffer.alloc(5242881), 'text/plain']] as [Buffer, string][]) expect(() => validateManual(bytes, type)).toThrow(); expect(fileHash(Buffer.from('same'))).toBe(fileHash(Buffer.from('same'))); });
+it('keeps page/ordinal citations and bounded overlapping text chunks', () => { const chunks = chunkPages(['a'.repeat(2000), 'Fictional second page']); expect(chunks).toHaveLength(3); expect(chunks[0]!.content).toHaveLength(1800); expect(chunks[1]!.content).toHaveLength(400); expect(chunks[2]).toMatchObject({ page: 2, ordinal: 2 }); expect(() => chunkPages([''])).toThrow(); expect(() => chunkPages(Array.from({ length: 101 }, () => 'a'))).toThrow(); });
+it('extracts a real PDF in the bounded parser subprocess', async () => {
+  const stream = 'BT /F1 12 Tf 10 50 Td (Fictional filter manual) Tj ET';
+  const objects = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>', '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 100] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>', `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`];
+  let text = '%PDF-1.4\n'; const offsets = [0]; for (let i = 0; i < objects.length; i++) { offsets.push(Buffer.byteLength(text)); text += `${i + 1} 0 obj\n${objects[i]}\nendobj\n`; } const xref = Buffer.byteLength(text); text += `xref\n0 6\n0000000000 65535 f \n${offsets.slice(1).map((offset) => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  expect((await extractPages(Buffer.from(text), 'application/pdf'))[0]).toContain('Fictional filter manual');
+}, 30000);
