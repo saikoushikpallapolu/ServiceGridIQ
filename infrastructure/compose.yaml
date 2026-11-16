@@ -56,6 +56,7 @@ services:
       dockerfile: apps/api/Dockerfile
     environment:
       NODE_ENV: production
+      OPS_METRICS_TOKEN: ${OPS_METRICS_TOKEN:-}
       PORT: 3001
       AUTH_MODE: local
       PUBLIC_ORIGIN: http://localhost:8080

@@ -58,6 +58,11 @@ jobs:
           docker compose --env-file .env -f infrastructure/compose.yaml up -d --build --wait --wait-timeout 180
           docker compose --env-file .env -f infrastructure/compose.yaml run --rm migrate pnpm --filter @servicegrid/api db:seed
           pnpm smoke
+      - name: Rehearse encrypted recovery, image recreation and local load
+        run: |
+          node scripts/recovery-drill.mjs
+          node scripts/release-drill.mjs
+          node scripts/run-load.mjs
       - name: Install browser and test real OIDC flow
         run: |
           pnpm exec playwright install --with-deps chromium

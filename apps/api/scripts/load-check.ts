@@ -1,0 +1,20 @@
+import 'dotenv/config';
+import { randomBytes, randomUUID } from 'node:crypto';
+import { writeFile, mkdir } from 'node:fs/promises';
+import { createDatabase } from '../src/database.js';
+import { hashToken } from '../src/auth/router.js';
+
+const origin = process.env.LOAD_ORIGIN ?? 'http://localhost:8080';
+if (!['localhost', '127.0.0.1'].includes(new URL(origin).hostname)) throw new Error('Load rehearsal is restricted to localhost');
+const db = createDatabase(process.env.LOAD_DATABASE_URL ?? process.env.DATABASE_URL!); const org = randomUUID(); const users: string[] = []; const tokens: string[] = [];
+const where = { organizationId: org };
+try {
+  await db.organization.create({ data: { id: org, name: 'Fictional isolated load rehearsal', slug: `load-${org}` } });
+  const customer = await db.customer.create({ data: { organizationId: org, name: 'Fictional load customer' } }); const site = await db.serviceSite.create({ data: { organizationId: org, customerId: customer.id, name: 'Fictional load site', address: 'Fictional address' } }); const equipment = await db.equipment.create({ data: { organizationId: org, siteId: site.id, manufacturer: 'Fictional', model: 'Load fixture', serialNumber: 'LOAD' } });
+  for (let batch = 0; batch < 10; batch++) await db.job.createMany({ data: Array.from({ length: 1000 }, (_, i) => ({ organizationId: org, customerId: customer.id, siteId: site.id, equipmentId: equipment.id, complaint: `Fictional load ${batch * 1000 + i}`, status: 'TRIAGED', arrivalStart: new Date('2035-01-01T09:00:00Z'), arrivalEnd: new Date('2035-01-01T12:00:00Z'), estimatedDurationMinutes: 60, travelBufferMinutes: 30 })) });
+  for (let i = 0; i < 10; i++) { const user = await db.user.create({ data: { issuer: 'http://localhost:8082/realms/servicegrid', subject: randomUUID(), email: `${randomUUID()}@example.test`, name: 'Fictional load dispatcher' } }); users.push(user.id); await db.membership.create({ data: { organizationId: org, userId: user.id, role: 'DISPATCHER' } }); const token = randomBytes(32).toString('base64url'); tokens.push(token); await db.authSession.create({ data: { userId: user.id, tokenHash: hashToken(token), csrfToken: randomBytes(32).toString('base64url'), activeOrganizationId: org, expiresAt: new Date(Date.now() + 3600000) } }); }
+  const timings: number[] = []; const statuses: Record<string, number> = {}; const start = performance.now();
+  await Promise.all(tokens.map(async (token) => { for (let i = 0; i < 30; i++) { const before = performance.now(); const response = await fetch(`${origin}/api/v1/jobs?page=${i % 10 + 1}&limit=25&q=Fictional%20load`, { headers: { Cookie: `sg_session=${token}`, 'X-Organization-Id': org }, signal: AbortSignal.timeout(10000) }); await response.arrayBuffer(); timings.push(performance.now() - before); statuses[response.status] = (statuses[response.status] ?? 0) + 1; } }));
+  timings.sort((a, b) => a - b); const report = { checkedAt: new Date().toISOString(), workload: 'Authenticated filtered job queue only; isolated fictional company', jobs: 10000, concurrency: 10, requests: timings.length, statuses, p50Milliseconds: Math.round(timings[Math.ceil(timings.length * .5) - 1]!), p95Milliseconds: Math.round(timings[Math.ceil(timings.length * .95) - 1]!), elapsedMilliseconds: Math.round(performance.now() - start), targetP95Milliseconds: 500 };
+  await mkdir('../../.data', { recursive: true }); await writeFile('../../.data/phase-8-load.json', JSON.stringify(report, null, 2)); console.log(JSON.stringify(report, null, 2)); if (statuses['200'] !== 300 || report.p95Milliseconds >= 500) process.exitCode = 1;
+} finally { await db.job.deleteMany({ where }); await db.equipment.deleteMany({ where }); await db.serviceSite.deleteMany({ where }); await db.customer.deleteMany({ where }); await db.authSession.deleteMany({ where: { userId: { in: users } } }); await db.membership.deleteMany({ where }); await db.user.deleteMany({ where: { id: { in: users } } }); await db.organization.deleteMany({ where: { id: org } }); await db.$disconnect(); }

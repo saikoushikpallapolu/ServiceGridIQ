@@ -1,0 +1,18 @@
+groups:
+  - name: servicegrid-pilot
+    rules:
+      - alert: ServiceGridUnavailable
+        expr: up{job="servicegrid"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations: { summary: "ServiceGrid scrape failed; check readiness and container logs" }
+      - alert: ServiceGridServerErrors
+        expr: rate(servicegrid_http_errors_total[5m]) / clamp_min(rate(servicegrid_http_requests_total[5m]), 0.01) > 0.02
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: "ServiceGrid server errors exceed 2 percent" }
+      - alert: ServiceGridSlowRequests
+        expr: histogram_quantile(0.95, rate(servicegrid_http_duration_seconds_bucket[5m])) > 0.5
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "ServiceGrid aggregate request p95 exceeds 500ms; investigate route logs" }

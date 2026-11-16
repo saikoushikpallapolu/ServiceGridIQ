@@ -7,11 +7,15 @@ import { pinoHttp } from 'pino-http';
 import { healthSchema } from '@servicegrid/contracts';
 import type { Router } from 'express';
 import { authError } from './auth/router.js';
+import { createMetrics } from './operations/metrics.js';
 
-export function createApp(options: { checkDatabase: () => Promise<void>; logLevel?: string; authRouter?: Router; logDestination?: DestinationStream }) {
+export function createApp(options: { checkDatabase: () => Promise<void>; logLevel?: string; authRouter?: Router; logDestination?: DestinationStream; metricsToken?: string; databaseMetrics?: () => Promise<{ bytes: string; connections: number; max: number }> }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(helmet());
+  const metrics = createMetrics(options.metricsToken, options.databaseMetrics);
+  app.get('/internal/metrics', metrics.endpoint);
+  app.use(metrics.observe);
   app.use(pinoHttp({
     logger: pino({ level: options.logLevel ?? 'info', redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]', 'res.headers.location'] }, options.logDestination),
     genReqId: (_req, res) => {

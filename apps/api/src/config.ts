@@ -6,6 +6,7 @@ const schema = z.object({
   HOST: z.string().default('0.0.0.0'),
   DATABASE_URL: z.url().refine((value) => /^postgres(ql)?:/.test(value), 'PostgreSQL URL required'),
   LOG_LEVEL: z.enum(['silent', 'fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+  OPS_METRICS_TOKEN: z.preprocess((value) => value === '' ? undefined : value, z.string().min(32).optional()),
   AUTH_MODE: z.enum(['disabled', 'local', 'oidc']).default('disabled'),
   PUBLIC_ORIGIN: z.url().default('http://localhost:8080'),
   OIDC_ISSUER: z.url().optional(),

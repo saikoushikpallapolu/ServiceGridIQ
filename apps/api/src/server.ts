@@ -7,7 +7,8 @@ import { purgeExpiredImports } from './onboarding/service.js';
 
 const config = parseConfig(process.env);
 const database = createDatabase(config.DATABASE_URL);
-const app = createApp({ checkDatabase: async () => { await database.$queryRaw`SELECT 1`; }, logLevel: config.LOG_LEVEL,
+const app = createApp({ checkDatabase: async () => { await database.$queryRaw`SELECT 1`; }, logLevel: config.LOG_LEVEL, metricsToken: config.OPS_METRICS_TOKEN,
+  databaseMetrics: async () => { const rows = await database.$queryRaw<{ bytes: string; connections: number; max: number }[]>`SELECT pg_database_size(current_database())::text AS bytes, (SELECT count(*)::int FROM pg_stat_activity WHERE datname = current_database()) AS connections, current_setting('max_connections')::int AS max`; return rows[0]!; },
   authRouter: createAuthRouter(database, config, createIdentityProvider(config)) });
 const server = app.listen(config.PORT, config.HOST);
 // Raw import contents expire after 24 hours; retain only safe provenance metadata.
