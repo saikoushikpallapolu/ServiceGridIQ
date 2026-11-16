@@ -1,28 +1,29 @@
-# Contributing
+# Maintenance and product feedback
 
-Phase 1 local implementation is underway; authentication and business functionality remain later phases. Read the [current blueprint](docs/architecture/ServiceGrid_IQ_Build_Blueprint_v2.md), [build plan](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md), and [Phase 1 checklist](docs/plans/phase-1-checklist.md) before changing application scope.
+ServiceGrid IQ is an owner-maintained, working MVP. This repository presents the product and its engineering evidence. It is not currently operated as a community contribution program, and unsolicited pull requests are not part of the maintenance workflow.
 
-## Workflow
+## Product and business discussions
 
-1. Choose one small task from the current phase and describe its acceptance criteria.
-2. Record architectural decisions and meaningful departures from the blueprint.
-3. Implement the smallest complete workflow, with migrations and contract updates where applicable.
-4. Run relevant checks. Include authorization, tenant isolation, transaction, and concurrency cases when the feature requires them.
-5. Update setup instructions and feature status to reflect what actually works.
-6. Submit a reviewable commit or pull request with actual validation evidence and limitations.
+For a product evaluation, pilot, integration or acquisition discussion, use the [project owner's GitHub profile](https://github.com/saikoushikpallapolu) and the evaluation guidance in [README.md](README.md). Agree on scope and a suitable private channel before sharing operational records or proprietary material.
 
-Use a branch such as `feat/phase-1-foundation` for implementation. Do not introduce microservices, orchestration, AI, or live integrations simply to broaden the stack.
+## Reporting an issue
 
-## Current verification
+Public reports should contain a non-sensitive description, expected behavior and reproducible steps using fictional data. Do not publish passwords, tokens, invitation links, private manuals, customer records, exports or database backups. Arrange a private channel with the owner before sharing exploitable security details.
+
+## Maintainer verification
+
+Owner-authorized changes must preserve server-side authorization, company boundaries, transaction guarantees and executable API contracts. Run checks appropriate to the change and update walkthroughs and verification records with actual results.
 
 ```sh
-node scripts/check-docs.mjs
+pnpm build
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm check:docs
 ```
 
-Run `pnpm build`, `pnpm typecheck`, `pnpm lint` and `pnpm test`. PostgreSQL integration checks require migration and seed; see docs/operations/local-development.md. Passing the documentation check does not mean application requirements have been implemented.
+Database and browser verification require configured local services; see [local development](docs/operations/local-development.md). Application CI provides the complete automated pipeline. Documentation checks alone do not verify application behavior.
 
-## Sensitive data and licensing
+## License
 
-Never commit credentials, private client data, proprietary manuals, production exports, or database backups. Environment examples contain placeholders only. Confirm document rights before ingestion.
-
-The owner selected the MIT license. Contributions must be compatible with LICENSE; never contribute material you do not have rights to distribute.
+The existing [MIT License](LICENSE) remains in effect. This maintenance policy does not revoke permissions granted by that license. Proprietary customer data and third-party documents must not be committed to the public repository.

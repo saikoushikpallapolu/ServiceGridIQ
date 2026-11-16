@@ -1,143 +1,399 @@
+<div align="center">
+
 # ServiceGrid IQ
 
-**Dispatch readiness for HVAC service teams.**
+### A more prepared visit. A more connected service operation.
 
-ServiceGrid IQ is a field-service preparation tool that helps dispatchers identify missing job information, check technician eligibility, confirm required-part readiness, and approve assignments with clear explanations. Technicians receive preparation cards and record visit outcomes, including linked follow-ups.
+Dispatch readiness, technician workflows, cited manual evidence and protected parts inventory for HVAC service teams.
 
-**Status: Phases 1–10 implemented locally; hosted pilot gates and real paid-provider evaluation remain open.** Core dispatch, visits, CSV onboarding and reporting are joined by local operations/recovery rehearsals (Phase 8), private reviewed manuals and cited evidence with optional OpenAI integration (Phase 9), and protected stock reservations/consumption (Phase 10). Add your own OpenAI key/model locally before evaluating AI output. AWS remains deferred.
+[![Application CI](https://github.com/saikoushikpallapolu/ServiceGridIQ/actions/workflows/ci.yml/badge.svg)](https://github.com/saikoushikpallapolu/ServiceGridIQ/actions/workflows/ci.yml)
+[![Documentation](https://github.com/saikoushikpallapolu/ServiceGridIQ/actions/workflows/docs.yml/badge.svg)](https://github.com/saikoushikpallapolu/ServiceGridIQ/actions/workflows/docs.yml)
+![Status: Working MVP](https://img.shields.io/badge/status-working_MVP-245cf6)
+[![License: MIT](https://img.shields.io/badge/license-MIT-122344)](LICENSE)
 
-![ServiceGrid IQ public website](docs/design/previews/landing-desktop.png)
+[Product overview](#why-servicegrid-iq) · [Screenshots](#inside-the-product) · [Architecture](#system-architecture) · [Run locally](#run-the-mvp-locally) · [Business inquiries](#evaluate-servicegrid-iq-for-your-team)
 
-## The problem we are testing
+</div>
 
-A technician may arrive without useful equipment information, the required qualification, or confirmation of a needed part. The product hypothesis is that an explicit preparation workflow can catch some of these gaps before dispatch and help teams understand why follow-up visits occur.
+![ServiceGrid IQ landing page](docs/design/previews/landing-desktop.png)
 
-The initial candidate customer is a commercial HVAC or AC maintenance company with approximately 5–30 technicians. Customer demand, pricing, and operational benefit still need validation.
+**ServiceGrid IQ is a working, end-to-end MVP for preparing and executing field-service visits.** It connects the office and the field through a practical workflow: capture the job, verify readiness, approve the right technician, protect required parts and record the outcome.
 
-## Planned pilot workflow
+> **Current availability:** functional locally through Docker Compose, with a responsive desktop and mobile web interface. Core workflows and the optional knowledge/inventory extensions are implemented and verified. Public hosting, customer pilots and live paid-provider evaluation are the next validation steps.
 
-1. Create or import a customer, site, equipment record, and service job.
-2. Review missing information, mandatory prerequisites, and parts evidence.
-3. Compare eligible technicians using explainable, deterministic ranking.
-4. Have a dispatcher approve the assignment after server-side revalidation.
-5. Let the assigned technician acknowledge, start, and close the visit.
-6. Create a linked follow-up when needed and review its recorded reason.
+## Why ServiceGrid IQ?
 
-MANUAL parts confirmation remains the default. Owners can enable **LEDGER mode** for protected required-part allocations and actual consumption; existing manual assignments retain their mode. Private reviewed manuals provide cited preparation evidence. The app is online-only responsive web, including the technician experience; native/offline mobile is not implemented.
+A job can be on the schedule and still be poorly prepared.
 
-## Documentation
+Missing equipment details, an unverified qualification, an unavailable part or an unclear handoff can surface only after a technician reaches the site. ServiceGrid IQ gives teams a place to resolve those gaps **before assignment**, then carry that preparation through the visit and any follow-up.
 
-| Document | Purpose |
+| Operational challenge | What ServiceGrid IQ provides |
 | --- | --- |
-| [Build blueprint v2 — Markdown](docs/architecture/ServiceGrid_IQ_Build_Blueprint_v2.md) · [PDF](docs/architecture/ServiceGrid_IQ_Build_Blueprint_v2.pdf) | Product boundaries, policies, lifecycle, data model, architecture, security, and acceptance criteria |
-| [Phase-wise build plan — Markdown](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md) · [PDF](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.pdf) | Detailed tasks, estimates, completion gates, and extension phases |
-| [Pilot OpenAPI contract](docs/api/ServiceGrid_IQ_Pilot_OpenAPI_v2.json) | Original proposed contract; implemented phase contracts below take precedence |
-| [Phase 2 API contract](docs/api/phase-2-openapi.json) | Implemented OIDC/session, membership, invitation and audit endpoints |
-| [Frontend design](docs/design/frontend-redesign.md) | Blue design system, public landing page, role-aware workspace navigation and mobile layouts |
-| [Phase 10 stock API](docs/api/phase-10-openapi.json) · [walkthrough](docs/operations/phase-10-local.md) · [verification](docs/plans/phase-10-checklist.md) | Optional protected inventory, actual consumption, returns and reconciliation |
-| [Phase 9 knowledge API](docs/api/phase-9-openapi.json) · [walkthrough](docs/operations/phase-9-local.md) | Private manual review, ingestion, cited retrieval and optional OpenAI configuration |
-| [Phase 8 runbook](docs/operations/phase-8-runbook.md) · [verification](docs/plans/phase-8-checklist.md) | Local recovery, monitoring and load evidence; remaining hosted pilot gates |
-| [Phase 7 API contract](docs/api/phase-7-openapi.json) | Implemented CSV reviews/commits, exports, reporting and audit |
-| [Phase 7 walkthrough](docs/operations/phase-7-local.md) · [checklist](docs/plans/phase-7-checklist.md) | Load fictional records and inspect operational results |
-| [Phase 6 API contract](docs/api/phase-6-openapi.json) | Implemented technician visits, outcomes, follow-ups and lifecycle actions |
-| [Phase 6 walkthrough](docs/operations/phase-6-local.md) · [checklist](docs/plans/phase-6-checklist.md) | Try the complete local dispatcher-to-technician workflow |
-| [Phase 5 API contract](docs/api/phase-5-openapi.json) | Implemented preparation, live readiness, ranking and approved assignment |
-| [Phase 5 walkthrough](docs/operations/phase-5-local.md) · [checklist](docs/plans/phase-5-checklist.md) | Prepare a job, resolve gaps and approve an eligible technician |
-| [Phase 4 API contract](docs/api/phase-4-openapi.json) | Implemented workforce, scheduling policy and eligibility endpoints |
-| [Phase 4 walkthrough](docs/operations/phase-4-local.md) · [checklist](docs/plans/phase-4-checklist.md) | Try qualification verification, availability and appointment checks |
-| [Phase 3 API contract](docs/api/phase-3-openapi.json) | Implemented customer, site, equipment and job-intake endpoints |
-| [Phase 3 checklist](docs/plans/phase-3-checklist.md) | Local completion evidence and remaining deployment gate |
-| [Phase 3 walkthrough](docs/operations/phase-3-local.md) | Try customer-to-job intake, triage and edit conflicts |
-| [Phase 2 checklist](docs/plans/phase-2-checklist.md) | Local completion evidence and deferred deployment boundaries |
-| [Phase 1 checklist](docs/plans/phase-1-checklist.md) | Immediate implementation tasks and completion evidence |
-| [Documentation index](docs/README.md) | Reading order and source-of-truth rules |
-| [Original blueprint v1 — archived PDF](docs/archive/ServiceGrid_IQ_Product_and_Engineering_Blueprint.pdf) | Historical reference; v2 supersedes it for new implementation decisions |
+| Job information lives across disconnected records | A linked customer, site, equipment and service-request history |
+| Dispatchers need to know what is missing | Explicit readiness checks, prerequisites, blockers and acknowledged warnings |
+| Technician selection relies on incomplete context | Eligibility checks and explainable ranking using recorded qualifications and availability |
+| The same stock can be promised to competing jobs | Optional transactional reservations for confirmed required parts |
+| Field teams receive an incomplete handoff | Assigned visit cards with preparation context, evidence and outcome capture |
+| Repeat visits are difficult to investigate | Linked follow-ups, recorded reasons and descriptive operational reporting |
 
-## Stack
+The intended business outcome is fewer preventable preparation gaps and clearer accountability. **Customer ROI, revisit reduction and willingness to pay have not yet been established through a live pilot.**
 
-| Area | Baseline |
-| --- | --- |
-| Frontend | React, TypeScript, Vite |
-| API | Node.js, TypeScript, Express, Zod |
-| Database | PostgreSQL, Prisma, reviewed SQL for database-specific constraints |
-| Local environment | Docker Compose |
-| Delivery | GitHub Actions, versioned container images, staging before production |
-| Later asynchronous work | Redis and BullMQ when document ingestion or sustained background tasks require them |
-| Later document knowledge | Private S3-compatible storage, pgvector, PostgreSQL full-text search, provider adapters |
+### Who it is built for
 
-Node.js 24.19.0 and pnpm 11.25.0 are pinned. Prisma 7.10.1 and PostgreSQL 17 are used with a committed lockfile. See [Phase 1 decisions](docs/architecture/0001-phase-1-foundation.md). Local sign-in uses Keycloak and OIDC server-side sessions. See [authentication decisions](docs/architecture/0002-authentication-and-tenancy.md). AWS staging is prepared but explicitly deferred.
+- **Commercial HVAC and AC maintenance teams** coordinating service jobs across technicians and locations.
+- **Owners and service managers** who need visibility into preparation, recorded outcomes and stock changes.
+- **Dispatchers** who need a defensible assignment decision, rather than another unstructured checklist.
+- **Technicians** who need the relevant job context on a phone at the point of work.
 
-## Repository layout
+The initial customer segment is a service business with approximately **5–30 technicians**. Suitability for larger operations requires representative workload and operating validation.
 
-```text
-apps/
-  web/                  # React dispatcher and technician workspaces
-  api/                  # Express identity, intake, preparation and visit APIs
-  worker/               # Reserved for later asynchronous processing
-packages/
-  contracts/            # Shared runtime schemas and TypeScript types
-infrastructure/         # Local Compose and prepared AWS staging configuration
-docs/
-  architecture/         # Current product and engineering blueprint
-  api/                  # Pilot OpenAPI contract
-  plans/                # Schedule and implementation checklist
-  operations/           # Deployment and recovery documentation as implemented
-  security/             # Security boundaries and future threat model
-  archive/              # Superseded source documents
-scripts/                # Setup, smoke, documentation and deployment helpers
-.github/workflows/      # Documentation, application CI and manual AWS release
+### Where it fits in an existing operation
+
+ServiceGrid IQ focuses on the preparation-to-outcome workflow. Reviewed CSV onboarding and controlled exports provide a practical starting point for evaluating it alongside existing records.
+
+It does not currently replace accounting, invoicing, payments, payroll or customer communications platforms. Direct synchronization with commercial field-service systems requires a separately scoped integration with confirmed vendor access and data ownership rules.
+
+## Inside the product
+
+Actual application screenshots below use fictional local demonstration records. Counts are sample operational data, not customer adoption or performance claims. Landing-page technician photography is AI-generated; [image provenance and design details](docs/design/frontend-redesign.md) are documented.
+
+### An operational overview with real workspace data
+
+Owners and dispatchers can inspect service-request counts, draft work awaiting triage, ready requests and visits in progress, then move into the relevant workflow.
+
+![ServiceGrid IQ operational overview](docs/design/previews/operations-overview.png)
+
+### A dispatch workspace built around preparation
+
+Search and filter requests, review equipment and site context, resolve preparation gaps, compare eligible technicians and approve assignments. The server rechecks current conditions before committing an assignment.
+
+![Dispatch workspace and job queue](docs/design/previews/dispatch-workspace.png)
+
+<details>
+<summary><strong>View the private manual library and mobile stock workflow</strong></summary>
+
+#### Reviewed knowledge, traceable evidence
+
+Owners upload and review manuals before indexing. Evidence is scoped to the company, equipment model and current approved document revision. Dispatchers and authorized technicians can verify the underlying source.
+
+![Private equipment manual library](docs/design/previews/manual-library.png)
+
+#### Stock consumption from the field
+
+An assigned technician can record consumption against protected quantities. Safe retries prevent a committed request from deducting stock twice when its response is lost.
+
+<img src="docs/design/previews/mobile-stock-consumption.png" alt="Mobile technician stock allocation and consumption form" width="340" />
+
+The technician interface is responsive, online mobile web. Native and offline applications are outside the current MVP.
+
+</details>
+
+## The complete service workflow
+
+```mermaid
+flowchart LR
+    A[Capture or import request] --> B[Review job and equipment]
+    B --> C[Check readiness]
+    C --> D{Gaps resolved?}
+    D -- No --> B
+    D -- Yes --> E[Compare eligible technicians]
+    E --> F[Dispatcher approves assignment]
+    F --> G[Technician acknowledges and starts]
+    G --> H[Record findings and actual stock use]
+    H --> I[Close visit]
+    I --> J{Follow-up needed?}
+    J -- Yes --> K[Create linked follow-up draft]
+    K --> B
+    J -- No --> L[Review outcome and reporting]
+    I --> L
+    classDef primary fill:#edf3ff,stroke:#245cf6,color:#122344
+    class A,C,E,F,G,H,I,L primary
 ```
 
-The web, API, contracts, local Compose stack with Keycloak, and AWS staging configuration now contain implementation. The worker directory remains reserved for a later phase.
+In LEDGER mode, assignment also reserves confirmed required stock within the same transaction. Closure releases unused quantities. A follow-up draft receives context and requirements, rather than inheriting a technician assignment or stock allocation.
 
-## Getting started
+## Implemented capabilities
+
+| Product area | Available in the MVP |
+| --- | --- |
+| **Company workspaces and access** | OIDC sign-in, server-side sessions, company selection, owner/dispatcher/technician roles, invitations, membership management and audit |
+| **Customer and asset context** | Customers, service sites, equipment records, versioned intake, filtering, triage, timelines and equipment service-request history |
+| **Workforce and scheduling** | Branches, technician profiles, owner-verified qualifications, explicit shifts/unavailability, estimated work duration, travel buffers and appointment eligibility |
+| **Dispatch readiness** | Required and suspected parts, prerequisites, timestamped manual evidence, blockers, acknowledged warnings, deterministic ranking and human-approved assignments |
+| **Technician execution** | Assigned visit cards, acknowledgment, start, notes and observations, closure, linked follow-up drafts, cancellation and pre-start rescheduling |
+| **Stock accounting** | Optional ledger mode, balances by part/location, atomic reservations, actual consumption, receipts, bounded returns, corrections, physical counts and reconciliation |
+| **Manual knowledge** | Private PDF/text uploads, quarantine/review/revocation, background extraction and indexing, current-source citations and optional OpenAI-assisted evidence selection |
+| **Onboarding and reporting** | Reviewed CSV imports, validation errors, safe commit retries, controlled exports, descriptive reports, explicit exclusions and paginated audit history |
+| **Operational foundation** | Health checks, private aggregate metrics, encrypted database restore rehearsals, exact-image recreation, local load checks and automated CI |
+
+### Clear responsibilities for each role
+
+| Role | Primary workspace responsibilities |
+| --- | --- |
+| **Owner** | Manage people and permissions, workforce records, manual approvals, stock movements and mode, onboarding, exports and reporting |
+| **Dispatcher** | Capture and triage requests, prepare jobs, inspect eligibility, approve assignments and manage supported visit lifecycle actions |
+| **Technician** | Access authorized assignments, review preparation evidence, acknowledge/start visits, record findings and consumption, and close visits |
+
+Permissions are enforced by the API. Hiding an interface control is not the authorization boundary.
+
+## What makes the implementation distinct
+
+### Readiness is part of the assignment decision
+
+The system distinguishes missing requirements, blocking conditions and warnings that need an explicit acknowledgment. A dispatcher sees the reasoning and makes the final decision. Eligibility and stock are revalidated when the assignment is approved.
+
+### Inventory protection is transactional
+
+In LEDGER mode, required-part allocations and the technician assignment commit together. Concurrent approvals cannot both claim the last available item. Receipts and consumption use version checks and idempotency keys; cancellations, rescheduling and closure release unused allocations.
+
+MANUAL mode remains available. Existing manual assignments are not silently converted into protected stock commitments when ledger mode is enabled.
+
+### Knowledge remains attributable and advisory
+
+Search filters approved sources by company, equipment manufacturer/model and document revision. Source access is rechecked when a citation is opened. Optional AI output selects validated source quotations with uncertainty and gaps; it cannot assign technicians, approve readiness or change inventory.
+
+### Follow-ups remain connected to the original visit
+
+A follow-up is a linked service request with a recorded reason. It enters its own preparation and assignment process, giving managers a basis for investigation rather than an untraceable duplicate job.
+
+## System architecture
+
+ServiceGrid IQ uses a **modular monolith with a separate background worker process**. The API owns business rules and transactional operations; the worker handles document ingestion. The worker runs from the API codebase and image, rather than being an unimplemented future service.
+
+```mermaid
+flowchart TB
+    subgraph Clients[User interfaces]
+        Desktop[Owner and dispatcher web]
+        Mobile[Technician mobile web]
+    end
+
+    subgraph Local[Current Docker Compose environment]
+        Web[Nginx + React / TypeScript / Vite]
+        Identity[Keycloak OIDC identity provider]
+        API[Express API + Zod contracts]
+        DB[(PostgreSQL + pgvector + full-text search)]
+        Redis[(Authenticated Redis / BullMQ)]
+        Worker[Document ingestion worker]
+        Storage[(Private S3-compatible storage / SeaweedFS)]
+        Migrate[Prisma migration job]
+    end
+
+    subgraph Optional[Optional external service]
+        AI[OpenAI embeddings and evidence selection]
+    end
+
+    Desktop --> Web
+    Mobile --> Web
+    Web -->|Same-origin API requests| API
+    Desktop -. OIDC browser redirects .-> Identity
+    Mobile -. OIDC browser redirects .-> Identity
+    API -->|OIDC backchannel| Identity
+    API -->|Scoped reads and transactional writes| DB
+    API -->|Private uploads and downloads| Storage
+    API -->|Queue ingestion work| Redis
+    Redis --> Worker
+    Worker -->|Read approved documents| Storage
+    Worker -->|Publish chunks and ingestion state| DB
+    API -. Explicit opt-in and document consent .-> AI
+    Worker -. Consented embeddings when configured .-> AI
+    Migrate --> DB
+
+    classDef app fill:#edf3ff,stroke:#245cf6,color:#122344
+    classDef data fill:#f3f6fb,stroke:#8da3c5,color:#122344
+    class Web,API,Worker,Identity,Migrate app
+    class DB,Redis,Storage data
+```
+
+**Reading the architecture:**
+
+1. Nginx serves the React app and proxies same-origin API requests. Sign-in uses local Keycloak and an opaque server-side session.
+2. Express validates shared Zod contracts and enforces company, role and assignment access before applying business rules.
+3. PostgreSQL stores operational records, audit, allocations, movements and document metadata/chunks. Reviewed SQL supplements Prisma with database-specific constraints and search features.
+4. Private object storage holds uploaded files. Redis/BullMQ coordinates ingestion; persisted queue intent and worker sweeps support recovery from enqueue failures.
+5. Local cited search works without an AI provider. Consented OpenAI processing is an optional extension with usage reservations and daily limits.
+
+AWS staging configuration exists separately from this local architecture. It has not been deployed or verified as a hosted production environment.
+
+### Technology stack
+
+| Layer | Implementation |
+| --- | --- |
+| Interface | React, TypeScript, Vite, shared blue/white/navy design system |
+| API | Node.js, Express, Zod |
+| Persistence | PostgreSQL 17, Prisma 7.10.1, reviewed SQL constraints |
+| Identity | Keycloak locally, OpenID Connect, server-side sessions |
+| Background processing | Redis, BullMQ, separate document worker |
+| Document storage | Private S3-compatible storage, SeaweedFS locally |
+| Retrieval | PostgreSQL full-text search, pgvector, exact-model/source filtering |
+| Optional AI | OpenAI embeddings and structured evidence selection |
+| Delivery and checks | Docker Compose, GitHub Actions, Vitest, Playwright |
+
+Node.js **24.19.0** and pnpm **11.25.0** are pinned. The repository includes a committed dependency lockfile and executable phase-specific API contracts.
+
+## Reliability, access control and engineering evidence
+
+- **Company isolation:** server-side scope checks and tenant-safe relationships protect operational and document records.
+- **Current access checks:** membership, role and technician assignment scope are enforced on relevant requests; withdrawn assignments lose access.
+- **Safe mutations:** version checks, assignment binding, idempotency keys and transactions protect supported workflows against stale edits and duplicate retries.
+- **Auditable changes:** attributed operational events and stock movements support investigation. Stock movement UPDATE is blocked; this does not make the database tamper-proof against privileged administrators.
+- **Private knowledge:** reviewed sources, authorized downloads, current-revision citation checks and bounded PDF extraction. File validation is not antivirus certification.
+- **Controlled AI:** provider access is optional, document consent and request opt-in are explicit, usage is tracked and failures fall back to labelled local evidence.
+- **Recovery evidence:** encrypted PostgreSQL backup/restore drills verify restored counts and stock reconciliation in a separate database; image recreation rehearsals preserve the database.
+
+### Verification snapshot
+
+The [verified frontend implementation](https://github.com/saikoushikpallapolu/ServiceGridIQ/actions/runs/43952206956) passed **167 automated tests**:
+
+| Test layer | Passed | Examples of covered behavior |
+| --- | ---: | --- |
+| Unit / protocol | 50 | Policy behavior, bounded extraction and provider protocol handling |
+| PostgreSQL integration | 98 | Authorization, tenancy, lifecycle transactions, stock races, safe retries and source filtering |
+| Real-container browser | 19 | OIDC, role workflows, mobile layouts, manual ingestion, reports, stock consumption and navigation |
+
+CI also builds the application, checks types/lint and generated contracts, audits production dependencies, starts the full container stack, smoke-tests it and rehearses recovery/load checks. These results describe the referenced implementation; the workflow badges above show current repository status.
+
+A separate local queue rehearsal used **10,000 fictional jobs**, **300 requests** and **10 concurrent clients**, returning 300 HTTP 200 responses with **118 ms p95** in the recorded run. This is a local filtered-queue read benchmark, not a production SLA or a capacity claim for every workload. See the [inventory verification record](docs/plans/phase-10-checklist.md) and [operations runbook](docs/operations/phase-8-runbook.md).
+
+## Run the MVP locally
+
+### Prerequisites
+
+- Git, Node.js 24.19.0 and pnpm 11.25.0.
+- Docker Desktop with its Linux engine running, or a compatible Docker Compose environment.
+- Available local ports for the web app, identity provider, database, Redis and object storage. See [local development](docs/operations/local-development.md) for configuration.
+
+### Start the complete application
 
 ```sh
 git clone https://github.com/saikoushikpallapolu/ServiceGridIQ.git
 cd ServiceGridIQ
+
 npm install --global pnpm@11.25.0
 pnpm install --frozen-lockfile
 pnpm setup:env
 pnpm db:generate
-docker compose --env-file .env -f infrastructure/compose.yaml up -d --build --wait --wait-timeout 180
+
+docker compose --env-file .env -f infrastructure/compose.yaml up -d --build --wait --wait-timeout 240
 docker compose --env-file .env -f infrastructure/compose.yaml run --rm migrate pnpm --filter @servicegrid/api db:seed
+
 pnpm smoke
 ```
 
-Open [http://localhost:8080](http://localhost:8080). Docker Desktop must be running. See [local development](docs/operations/local-development.md) for hot reload, seeds, tests, logs, and safe shutdown. See [AWS setup for beginners](docs/operations/aws-staging.md) for account and staging steps. Click Sign in and use a generated fictional account from your ignored `.data/local-accounts.json`. See the [Phase 2 sign-in guide](docs/operations/phase-2-local.md). Use localhost for browser sign-in. The identity container is development-only; no public cloud identity provider is configured.
+Open **[http://localhost:8080](http://localhost:8080)**, choose **Sign in**, then select a company. Use `localhost` for the OIDC browser flow.
 
-The documentation check requires Node.js 22 or later and no package installation. It checks required files, local Markdown links, JSON parsing, local OpenAPI references, and operation IDs. It is not a full OpenAPI validator or application test suite.
+Setup generates fictional local account passwords in the ignored `.data/local-accounts.json` file. Passwords and keys are not published in this repository. The [sign-in guide](docs/operations/phase-2-local.md) lists demonstration roles and account setup.
 
-Track remaining deployment evidence in the [Phase 1 checklist](docs/plans/phase-1-checklist.md) , [Phase 2 checklist](docs/plans/phase-2-checklist.md) and [Phase 3 checklist](docs/plans/phase-3-checklist.md). CI builds, checks types/lint, runs unit and PostgreSQL integration tests, smoke-tests the Docker stack, and runs real OIDC browser checks. AWS release is a separate manual workflow requiring account configuration and approval.
+No OpenAI key is needed for the core workflow or local cited search. Optional provider configuration is documented in the [knowledge walkthrough](docs/operations/phase-9-local.md); enter keys locally, never in Git or public messages.
 
-## Delivery plan
+### Recommended demonstration path
 
-| Phase | Outcome | Estimated hours |
-| --- | --- | --- |
-| 1 | Project setup and first staging deployment | 12–18 |
-| 2 | Authentication and company isolation | 18–26 |
-| 3 | Customers, equipment, and service intake | 20–28 |
-| 4 | Technician skills and availability | 18–26 |
-| 5 | Readiness checks and approved assignment | 26–36 |
-| 6 | Technician workflow and follow-up tracking | 22–30 |
-| 7 | CSV onboarding and basic reporting | 20–28 |
-| 8 | Operational pilot readiness | 24–36 |
-| 9 | Optional cited AI preparation | Additional 35–55 |
-| 10 | Optional transactional inventory | Additional 30–50; integrations estimated separately |
+1. **Owner:** open Overview, inspect company data, then review Workforce and Parts & locations.
+2. **Dispatcher:** open Dispatch, create or select a request, review readiness, compare eligible technicians and approve an assignment.
+3. **Technician:** use My visits on a phone-sized screen, acknowledge/start the visit, inspect preparation and record the outcome.
+4. **Inventory extension:** initialize appropriate balances, review legacy commitments and enable ledger mode; demonstrate protected assignment, consumption and unused-stock release.
+5. **Knowledge extension:** upload a permitted manual, approve/index it and verify cited evidence against an applicable job.
+6. **Owner:** inspect follow-up reasons, descriptive reports and audit history in Reports & data.
 
-Allow approximately **180–260 focused hours including contingency** for Phases 1–8, or approximately **8–11 weeks at 25 hours per week**. These are estimates, not delivery commitments. Conduct customer discovery alongside the early phases and make extensions conditional on evidence.
+Use the linked walkthroughs below for prerequisites and complete step-by-step exercises. The local identity provider and generated demonstration credentials are for development, not public deployment.
 
-## Engineering rules
+### Useful engineering commands
 
-- Enforce company and role authorization on the server, including workers, exports, and document retrieval.
-- Keep dispatch human-approved and ranking deterministic.
-- Protect assignment and stock invariants with transactions and appropriate database constraints.
-- Keep AI advisory; it cannot directly assign technicians or mutate inventory.
-- Use fictional public demo data and keep credentials, private manuals, and customer exports out of Git history.
-- Record executed checks and known limitations. Do not represent planned functionality as shipped.
+```sh
+pnpm build              # Build contracts, API and frontend
+pnpm typecheck          # Check workspace TypeScript
+pnpm lint               # Run lint checks
+pnpm test               # Unit / protocol tests
+pnpm test:integration   # Requires configured, migrated PostgreSQL
+pnpm smoke              # Requires the running local container stack
+pnpm check:docs         # Validate documentation files and references
+```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the implementation workflow.
+For browser checks, install Chromium with `pnpm exec playwright install chromium`, then run `pnpm test:browser` against the running, seeded local stack. Documentation checks verify artifacts and references; they are not substitutes for application tests.
 
-## Licensing
+## Repository structure
 
-This project is licensed under the [MIT License](LICENSE), as selected by the owner. It permits commercial reuse and redistribution under its terms. Proprietary customer data and third-party manuals are not licensed by this repository.
+```text
+apps/
+  web/                        React interface and public website
+  api/
+    prisma/                   Schema, migrations and seed data
+    src/
+      auth/                   Identity, sessions and company access
+      intake/                 Customers, assets and service intake
+      scheduling/             Workforce and appointment eligibility
+      dispatch/               Readiness, ranking and assignment
+      visits/                 Technician execution and outcomes
+      inventory/              Balances, allocations and stock movements
+      knowledge/              Private manuals, retrieval and worker entry point
+      onboarding/             Reviewed CSV, exports and descriptive reporting
+packages/
+  contracts/                  Shared Zod schemas and TypeScript types
+infrastructure/
+  compose.yaml                Complete local environment
+  aws/                        Prepared staging configuration
+  monitoring/                 Alert-rule definitions
+scripts/                      Setup, smoke, contract and recovery helpers
+tests/browser/                End-to-end user workflows and design checks
+docs/                         Architecture, APIs, walkthroughs and verification
+.github/workflows/            Application/documentation CI and manual staging workflow
+```
+
+## Technical documentation
+
+| Reference | What it explains |
+| --- | --- |
+| [Documentation index](docs/README.md) | Full reading guide and implementation records |
+| [Product and engineering blueprint](docs/architecture/ServiceGrid_IQ_Build_Blueprint_v2.md) | Product boundaries, lifecycle, architecture and original design decisions |
+| [Frontend design record](docs/design/frontend-redesign.md) | Workspace navigation, image provenance, design checks and verified CI |
+| [Intake walkthrough](docs/operations/phase-3-local.md) | Customers, sites, equipment, requests and triage |
+| [Workforce walkthrough](docs/operations/phase-4-local.md) | Qualifications, shifts and eligibility |
+| [Dispatch walkthrough](docs/operations/phase-5-local.md) | Preparation, readiness, ranking and approved assignment |
+| [Technician workflow](docs/operations/phase-6-local.md) | Visits, closure, cancellation, rescheduling and follow-ups |
+| [Data and reporting](docs/operations/phase-7-local.md) | CSV review/commit, exports, exclusions and audit |
+| [Operating and recovery runbook](docs/operations/phase-8-runbook.md) | Metrics, restoration, recovery rehearsals and hosted operating gates |
+| [Manual knowledge walkthrough](docs/operations/phase-9-local.md) | Private ingestion, citations, optional AI and source limitations |
+| [Stock ledger walkthrough](docs/operations/phase-10-local.md) | Reservations, consumption, returns, reconciliation and mode transition |
+
+Implemented API contracts are available for [authentication](docs/api/phase-2-openapi.json), [intake](docs/api/phase-3-openapi.json), [scheduling](docs/api/phase-4-openapi.json), [dispatch](docs/api/phase-5-openapi.json), [visits](docs/api/phase-6-openapi.json), [data/reporting](docs/api/phase-7-openapi.json), [knowledge](docs/api/phase-9-openapi.json) and [inventory](docs/api/phase-10-openapi.json).
+
+The original blueprint and proposed pilot contract describe design intent. Implemented contracts, current walkthroughs and verification records take precedence when assessing what runs today.
+
+## Current scope and next milestones
+
+| Implemented and demonstrated | Next validation / separately scoped work |
+| --- | --- |
+| Complete local service-request-to-outcome workflow | Hosted staging, managed identity, TLS and public deployment |
+| Multi-company roles and authorized technician workflows | Named pilot partner, shadow operation and measured customer outcomes |
+| Optional transactional stock ledger | Purchasing, costing, transfers and vendor synchronization |
+| Private manual ingestion and cited retrieval | Real paid OpenAI evaluation against permitted customer manuals |
+| Responsive online mobile web | Native applications and offline synchronization |
+| Local metrics, restore/image/load rehearsals | Offsite backup/key custody, delivered alerts and hosted recovery validation |
+
+No customer adoption statistics, revenue results, security certification or production uptime guarantee are claimed by this repository.
+
+## Evaluate ServiceGrid IQ for your team
+
+For companies exploring a pilot, workflow adaptation or product acquisition discussion, the next step is a focused review of the **preparation and handoff problem** in your operation.
+
+A useful evaluation starts with:
+
+- Your service categories, technician count and dispatch process.
+- Where missing information, parts or qualifications create friction today.
+- Your current systems and the records you can export for a controlled evaluation.
+- A small set of agreed pilot measures, such as preparation gaps caught, recorded follow-up reasons and dispatcher review effort.
+
+**Contact the project owner:** [Sai Koushik Pallapolu on GitHub](https://github.com/saikoushikpallapolu). The profile is the public contact entry point; no unattended sales inbox or support channel is implied. Share only a non-sensitive overview through any public channel, then agree on an appropriate private discussion method.
+
+Pilots, hosting, integrations, support and any commercial arrangement require an agreed scope. The repository provides a working product to evaluate, rather than a promise of unverified operational results.
+
+## License and ownership
+
+ServiceGrid IQ is maintained by [saikoushikpallapolu](https://github.com/saikoushikpallapolu) and distributed under the [MIT License](LICENSE). Commercial reuse and redistribution are permitted under that license; this README does not replace its terms or promise exclusive software rights.
+
+Customer records, proprietary equipment manuals and third-party materials are not licensed by this repository. See [maintenance and feedback guidance](CONTRIBUTING.md) for repository handling.
+
+## Product demo
+
+A recorded walkthrough will be added here by the project owner. Until then, use the screenshots, implemented walkthroughs and local setup above to explore the MVP.
+
+<!-- Add the demo video link or linked thumbnail here when the recording is ready. -->
