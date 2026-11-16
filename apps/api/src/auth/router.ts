@@ -9,6 +9,7 @@ import { AuthError, reject as fail } from './errors.js';
 import { createCompanyService } from './company-service.js';
 import { createIntakeRouter } from '../intake/router.js';
 import { createSchedulingRouter } from '../scheduling/router.js';
+import { createDispatchRouter } from '../dispatch/router.js';
 import { context, type Context } from './context.js';
 
 const uuid = z.uuid();
@@ -162,6 +163,7 @@ export function createAuthRouter(database: PrismaClient, config: Config, provide
   });
 
   router.use('/v1', requireTenant);
+  router.use('/v1', createDispatchRouter(database, requireCsrf));
   router.use('/v1', createSchedulingRouter(database, requireCsrf));
   router.use('/v1', createIntakeRouter(database, requireCsrf));
   router.get('/v1/organizations/:organizationId', async (req, res) => {

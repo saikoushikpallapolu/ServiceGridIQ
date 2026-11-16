@@ -101,7 +101,7 @@ export function createIntakeRouter(database: PrismaClient, csrf: RequestHandler)
     const { page, limit, q, status, priority, customerId } = parse(querySchema, req.query);
     const organizationId = context(res).membership!.organizationId;
     const where: Prisma.JobWhereInput = { organizationId, status, priority, customerId, ...(q ? { OR: [{ complaint: { contains: q, mode: 'insensitive' } }, { site: { customer: { name: { contains: q, mode: 'insensitive' } } } }, { equipment: { serialNumber: { contains: q, mode: 'insensitive' } } }] } : {}) };
-    const [items, total] = await database.$transaction([database.job.findMany({ where, include: jobInclude, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: (page - 1) * limit, take: limit }), database.job.count({ where })]);
+    const [items, total] = await database.$transaction([database.job.findMany({ where, include: jobInclude, orderBy: [{ priority: 'desc' }, { arrivalStart: 'asc' }, { id: 'asc' }], skip: (page - 1) * limit, take: limit }), database.job.count({ where })]);
     res.json({ items: items.map(summary), total, page, limit });
   });
   router.post('/jobs', async (req, res) => { res.status(201).json(await jobs.create(context(res).membership!, parse(jobInputSchema, req.body))); });

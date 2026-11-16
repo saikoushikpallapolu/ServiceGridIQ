@@ -43,7 +43,14 @@ try {
       }
     }
     await seedScheduling(database, [alpha, beta]);
-    console.log('Local-only fictional identities, intake and scheduling seeded. Existing edits and revocations were preserved.');
+    for (const [organizationId, suffix] of [[alpha, '001'], [beta, '002']] as const) {
+      const branchId = `60000000-0000-4000-8000-000000000${suffix}`;
+      if (await database.branch.findUnique({ where: { id: branchId } })) {
+        await database.part.upsert({ where: { organizationId_sku: { organizationId, sku: `DEMO-FILTER-${suffix}` } }, create: { id: `a0000000-0000-4000-8000-000000000${suffix}`, organizationId, sku: `DEMO-FILTER-${suffix}`, name: 'Fictional air filter', unit: 'each' }, update: {} });
+        await database.stockLocation.upsert({ where: { organizationId_branchId_name: { organizationId, branchId, name: 'Fictional stores' } }, create: { id: `b0000000-0000-4000-8000-000000000${suffix}`, organizationId, branchId, name: 'Fictional stores', kind: 'BRANCH' }, update: {} });
+      }
+    }
+    console.log('Local-only fictional identities, intake, scheduling and parts seeded. Existing edits and revocations were preserved.');
   }
   console.log('Two fictional organizations seeded. No public organization API is enabled.');
 } finally { await database.$disconnect(); }

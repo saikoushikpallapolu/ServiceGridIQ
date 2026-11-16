@@ -6,6 +6,7 @@ import './styles.css';
 import { api, ApiError } from './api';
 import { Intake } from './Intake';
 import { Workforce } from './Workforce';
+import { PartsCatalog } from './PartsCatalog';
 
 const authConfigSchema = z.object({ enabled: z.boolean(), mode: z.string(), loginUrl: z.url() });
 const auditSchema = z.object({ items: z.array(z.object({ id: z.uuid(), action: z.string(), targetId: z.string(), createdAt: z.iso.datetime() })) });
@@ -110,6 +111,7 @@ function App() {
           {company && <section className="workspace-summary"><span className="role-badge">{company.role}</span><h2>{company.name}</h2><p>{company.role === 'OWNER' ? 'You can manage intake, team access and review company changes.' : 'Your company workspace is ready. Dispatchers can manage intake; assigned-job tools arrive in a later phase.'}</p></section>}
           {company && company.role !== 'TECHNICIAN' && <Intake key={`intake-${company.id}`} session={session!} />}
           {company && company.role !== 'TECHNICIAN' && <Workforce key={`workforce-${company.id}`} session={session!} />}
+          {company && company.role !== 'TECHNICIAN' && <PartsCatalog key={`parts-${company.id}`} session={session!} />}
           {company?.role === 'OWNER' && <>
             <section className="status-panel team-panel"><div className="panel-heading"><div><p className="eyebrow">TEAM ACCESS</p><h2>People in this company</h2></div></div>
               <div className="team-list">{members.map((member) => <article className="member-row" key={member.id}><div><strong>{member.name}</strong><span>{member.email}</span><small>{member.active ? 'Active' : 'Access disabled'}</small></div><div className="member-actions"><select aria-label={`Role for ${member.email}`} value={member.role} disabled={busy} onChange={(event) => updateMember(member, { role: event.target.value as Membership['role'] })}><option value="OWNER">Owner</option><option value="DISPATCHER">Dispatcher</option><option value="TECHNICIAN">Technician</option></select><button disabled={busy} onClick={() => { if (window.confirm(`${member.active ? 'Disable' : 'Enable'} access for ${member.name}?`)) updateMember(member, { active: !member.active }); }}>{member.active ? 'Disable access' : 'Enable access'}</button></div></article>)}</div>
@@ -120,7 +122,7 @@ function App() {
           </>}
         </>}
         <section className="next-section"><div><p className="eyebrow">CONNECTION STATUS</p><h2>Application foundation</h2></div><p>{health ? `API ${health.status === 'ok' ? 'connected' : 'degraded'} · Database ${health.checks.database}` : 'Check the current application and database connection.'}</p><button disabled={busy} onClick={() => void action(async () => { const response = await fetch('/health/ready', { signal: AbortSignal.timeout(6000) }); setHealth(healthSchema.parse(await response.json())); })}>Check connection</button></section>
-        <footer>ServiceGrid IQ <span>Service intake is available. Scheduling and assignment are still in development.</span></footer>
+        <footer>ServiceGrid IQ <span>Readiness and approved assignment are available. Technician execution is still in development.</span></footer>
       </>}
     </main>
   </div>;

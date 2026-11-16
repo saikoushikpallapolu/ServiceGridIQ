@@ -101,7 +101,7 @@ describe('service intake boundaries and workflow', () => {
     expect(transitioned.body).toMatchObject({ status: 'TRIAGED', version: 2 });
     expect(await db.jobEvent.count({ where: { organizationId: org, jobId: second.id } })).toBe(2);
     expect(await db.auditEvent.count({ where: { organizationId: org, targetId: second.id } })).toBe(2);
-    await call('patch', `/jobs/${second.id}`).send({ ...input(), version: 2 }).expect(409);
+    await call('patch', `/jobs/${second.id}`).send({ ...input(), version: 2, status: 'ASSIGNED' }).expect(400);
     await call('post', `/jobs/${second.id}/transitions`).send({ version: 2, status: 'DRAFT', reason: '' }).expect(409);
     await call('post', `/jobs/${second.id}/transitions`).send({ version: 2, status: 'DRAFT', reason: 'Customer corrected access information' }).expect(200);
     await call('patch', `/jobs/${second.id}`).send({ ...input(), complaint: 'Updated complaint', version: 3 }).expect(200);

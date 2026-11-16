@@ -26,7 +26,7 @@ Arrival start and end are timestamped instants with explicit offsets. The browse
 | DRAFT → TRIAGED | Owner or dispatcher | Exact version; valid references and arrival window | Increment version; timeline and audit |
 | TRIAGED → DRAFT | Owner or dispatcher | Exact version; nonblank correction reason | Increment version; reason recorded in timeline; audit |
 
-Other transitions, same-state requests, editing triaged intake, and stale writes are rejected. TRIAGED means intake is checked and ready for the future scheduling workflow. It does not imply readiness, stock availability or assignment.
+Phase 5 extends intake editing to TRIAGED/READY, invalidates readiness on material changes and locks ASSIGNED intake; see [the current dispatch decision](0005-readiness-and-assignment.md). Ordinary transitions still reject stale and same-state requests. TRIAGED means intake is checked and ready for the future scheduling workflow. It does not imply readiness, stock availability or assignment.
 
 ## Concurrent edits and history
 
@@ -34,7 +34,7 @@ Jobs and master records have positive integer versions. Every edit submits its o
 
 Timeline entries and audit records commit in the same transaction as the job change. The UI shows the newest 100 timeline events with actor and time, and the newest 20 other requests for that equipment. These are service requests, not evidence of completed visits. Earlier records remain in PostgreSQL. The owner audit view retains its existing newest-100 limit. No retention/cleanup job or complete historical export is delivered here.
 
-The queue offers complaint/customer/serial search, exact status and priority filters, and bounded offset pagination with timestamp/ID ordering. Master pickers fetch paginated customer and parent-filtered site/equipment lists. This supports the local pilot; server-side searchable pickers and keyset pagination should replace full picker loading for larger datasets. Offset pages may shift as other users insert new jobs.
+The queue offers complaint/customer/serial search, exact status and priority filters, and bounded offset pagination with priority/arrival/ID ordering as of Phase 5. Master pickers fetch paginated customer and parent-filtered site/equipment lists. This supports the local pilot; server-side searchable pickers and keyset pagination should replace full picker loading for larger datasets. Offset pages may shift as other users insert new jobs.
 
 ## Verification boundary
 

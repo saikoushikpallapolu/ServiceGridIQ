@@ -10,7 +10,7 @@ export async function eligibility(tx: Prisma.TransactionClient, organizationId: 
   const job = await tx.job.findUnique({ where: { organizationId_id: { organizationId, id: jobId } }, include: { scheduling: { include: { requirements: { include: { skill: true } } } } } });
   if (!job) return reject(404, 'NOT_FOUND', 'Job not found');
   if (job.version !== version) return reject(409, 'VERSION_CONFLICT', 'This job changed. Reload it before checking eligibility');
-  if (job.status !== 'TRIAGED') return reject(409, 'INTAKE_REQUIRED', 'Triage this job before checking eligibility');
+  if (!['TRIAGED', 'READY'].includes(job.status)) return reject(409, 'INTAKE_REQUIRED', 'Triage this job before checking eligibility');
   if (!job.scheduling) return reject(409, 'POLICY_REQUIRED', 'Save a branch and qualification policy first');
   if (job.scheduling.generalInspection ? job.scheduling.requirements.length > 0 : job.scheduling.requirements.length === 0) return reject(409, 'POLICY_REQUIRED', 'Confirm general inspection or specify required qualifications');
   if (plannedStart < job.arrivalStart || plannedStart >= job.arrivalEnd) return reject(400, 'OUTSIDE_ARRIVAL_WINDOW', 'Planned arrival must be at or after the window start and before its end');

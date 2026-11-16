@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ServiceGrid IQ implemented Phase 3 intake API",
-    "version": "0.3.0",
-    "description": "Local implementation contract. Owner/dispatcher only. Arrival instants require an offset, end after start and at most seven days later. Duration and travel are estimates, not appointments. Draft edits and transitions require the latest version. TRIAGED must return to DRAFT with a reason before editing. History contains the newest 20 other equipment requests; timeline contains the newest 100 events. No deletion, equipment relocation, technician queue access or scheduling is implemented."
+    "version": "0.5.0",
+    "description": "Local implementation contract. Owner/dispatcher only. Arrival instants require an offset, end after start and at most seven days later. Duration and travel are estimates, not appointments. Intake edits support DRAFT, TRIAGED and READY with the latest version; READY edits invalidate preparation and return to TRIAGED. ASSIGNED intake is locked. Ordinary transitions remain DRAFT/TRIAGED; use the Phase 5 preparation endpoints for readiness and assignment. History contains the newest 20 other equipment requests; timeline contains the newest 100 events. No deletion, equipment relocation, technician queue access or scheduling is implemented."
   },
   "paths": {
     "/api/v1/customers": {
@@ -1367,7 +1367,9 @@
               "type": "string",
               "enum": [
                 "DRAFT",
-                "TRIAGED"
+                "TRIAGED",
+                "READY",
+                "ASSIGNED"
               ]
             },
             "description": "Exact state."
@@ -2172,6 +2174,12 @@
             "minLength": 1,
             "maxLength": 4000
           },
+          "serviceCategory": {
+            "default": "GENERAL_SERVICE",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
           "priority": {
             "type": "string",
             "enum": [
@@ -2207,6 +2215,7 @@
           "siteId",
           "equipmentId",
           "complaint",
+          "serviceCategory",
           "priority",
           "arrivalStart",
           "arrivalEnd",
@@ -2237,6 +2246,12 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 4000
+          },
+          "serviceCategory": {
+            "default": "GENERAL_SERVICE",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
           },
           "priority": {
             "type": "string",
@@ -2278,6 +2293,7 @@
           "siteId",
           "equipmentId",
           "complaint",
+          "serviceCategory",
           "priority",
           "arrivalStart",
           "arrivalEnd",
@@ -2633,6 +2649,12 @@
             "minLength": 1,
             "maxLength": 4000
           },
+          "serviceCategory": {
+            "default": "GENERAL_SERVICE",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
           "priority": {
             "type": "string",
             "enum": [
@@ -2686,7 +2708,21 @@
             "type": "string",
             "enum": [
               "DRAFT",
-              "TRIAGED"
+              "TRIAGED",
+              "READY",
+              "ASSIGNED"
+            ]
+          },
+          "plannedStart": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },
@@ -2695,6 +2731,7 @@
           "siteId",
           "equipmentId",
           "complaint",
+          "serviceCategory",
           "priority",
           "arrivalStart",
           "arrivalEnd",
@@ -2704,7 +2741,8 @@
           "version",
           "createdAt",
           "updatedAt",
-          "status"
+          "status",
+          "plannedStart"
         ],
         "additionalProperties": true
       },
@@ -2731,6 +2769,12 @@
             "minLength": 1,
             "maxLength": 4000
           },
+          "serviceCategory": {
+            "default": "GENERAL_SERVICE",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
           "priority": {
             "type": "string",
             "enum": [
@@ -2784,7 +2828,21 @@
             "type": "string",
             "enum": [
               "DRAFT",
-              "TRIAGED"
+              "TRIAGED",
+              "READY",
+              "ASSIGNED"
+            ]
+          },
+          "plannedStart": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "customerName": {
@@ -2802,6 +2860,7 @@
           "siteId",
           "equipmentId",
           "complaint",
+          "serviceCategory",
           "priority",
           "arrivalStart",
           "arrivalEnd",
@@ -2812,6 +2871,7 @@
           "createdAt",
           "updatedAt",
           "status",
+          "plannedStart",
           "customerName",
           "siteName",
           "equipmentLabel"
@@ -2841,6 +2901,12 @@
             "minLength": 1,
             "maxLength": 4000
           },
+          "serviceCategory": {
+            "default": "GENERAL_SERVICE",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
           "priority": {
             "type": "string",
             "enum": [
@@ -2894,7 +2960,21 @@
             "type": "string",
             "enum": [
               "DRAFT",
-              "TRIAGED"
+              "TRIAGED",
+              "READY",
+              "ASSIGNED"
+            ]
+          },
+          "plannedStart": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "customer": {
@@ -3138,6 +3218,12 @@
                   "minLength": 1,
                   "maxLength": 4000
                 },
+                "serviceCategory": {
+                  "default": "GENERAL_SERVICE",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
                 "priority": {
                   "type": "string",
                   "enum": [
@@ -3191,7 +3277,21 @@
                   "type": "string",
                   "enum": [
                     "DRAFT",
-                    "TRIAGED"
+                    "TRIAGED",
+                    "READY",
+                    "ASSIGNED"
+                  ]
+                },
+                "plannedStart": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    {
+                      "type": "null"
+                    }
                   ]
                 },
                 "customerName": {
@@ -3209,6 +3309,7 @@
                 "siteId",
                 "equipmentId",
                 "complaint",
+                "serviceCategory",
                 "priority",
                 "arrivalStart",
                 "arrivalEnd",
@@ -3219,6 +3320,7 @@
                 "createdAt",
                 "updatedAt",
                 "status",
+                "plannedStart",
                 "customerName",
                 "siteName",
                 "equipmentLabel"
@@ -3232,6 +3334,7 @@
           "siteId",
           "equipmentId",
           "complaint",
+          "serviceCategory",
           "priority",
           "arrivalStart",
           "arrivalEnd",
@@ -3242,6 +3345,7 @@
           "createdAt",
           "updatedAt",
           "status",
+          "plannedStart",
           "customer",
           "site",
           "equipment",

@@ -28,10 +28,10 @@ const text = (max: number) => z.string().trim().min(1).max(max);
 export const customerInputSchema = z.object({ name: text(160), email: z.email().max(254).nullable(), phone: text(40).nullable() }).strict();
 export const siteInputSchema = z.object({ customerId: z.uuid(), name: text(160), address: text(500), accessNotes: z.string().trim().max(2000) }).strict();
 export const equipmentInputSchema = z.object({ siteId: z.uuid(), manufacturer: text(120), model: text(120), serialNumber: text(160), notes: z.string().trim().max(2000) }).strict();
-export const jobStatusSchema = z.enum(['DRAFT', 'TRIAGED']);
+export const jobStatusSchema = z.enum(['DRAFT', 'TRIAGED', 'READY', 'ASSIGNED']);
 export const jobPrioritySchema = z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']);
 export const jobInputSchema = z.object({
-  customerId: z.uuid(), siteId: z.uuid(), equipmentId: z.uuid(), complaint: text(4000), priority: jobPrioritySchema,
+  customerId: z.uuid(), siteId: z.uuid(), equipmentId: z.uuid(), complaint: text(4000), serviceCategory: text(120).default('GENERAL_SERVICE'), priority: jobPrioritySchema,
   arrivalStart: z.iso.datetime({ offset: true }), arrivalEnd: z.iso.datetime({ offset: true }),
   estimatedDurationMinutes: z.number().int().min(15).max(1440), travelBufferMinutes: z.number().int().min(0).max(480),
 }).strict();
@@ -40,12 +40,12 @@ export function validArrivalWindow(input: { arrivalStart: string; arrivalEnd: st
   return span > 0 && span <= 7 * 24 * 60 * 60_000;
 }
 export const jobUpdateSchema = jobInputSchema.extend({ version: z.number().int().positive() });
-export const jobTransitionSchema = z.object({ version: z.number().int().positive(), status: jobStatusSchema, reason: z.string().trim().max(2000) }).strict();
+export const jobTransitionSchema = z.object({ version: z.number().int().positive(), status: z.enum(['DRAFT', 'TRIAGED']), reason: z.string().trim().max(2000) }).strict();
 const recordFields = { id: z.uuid(), version: z.number().int().positive(), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime() };
 export const customerSchema = customerInputSchema.extend(recordFields).strip();
 export const siteSchema = siteInputSchema.extend(recordFields).strip();
 export const equipmentSchema = equipmentInputSchema.extend(recordFields).strip();
-export const jobSchema = jobInputSchema.extend({ ...recordFields, status: jobStatusSchema }).strip();
+export const jobSchema = jobInputSchema.extend({ ...recordFields, status: jobStatusSchema, plannedStart: z.iso.datetime().nullable() }).strip();
 export const jobSummarySchema = jobSchema.extend({ customerName: z.string(), siteName: z.string(), equipmentLabel: z.string() });
 export const jobEventSchema = z.object({ id: z.uuid(), kind: z.string(), note: z.string(), createdAt: z.iso.datetime(), actorName: z.string() });
 export const jobDetailSchema = jobSchema.extend({ customer: customerSchema, site: siteSchema, equipment: equipmentSchema,
@@ -78,3 +78,29 @@ export type TechnicianRecord = z.infer<typeof technicianSchema>;
 export type Branch = z.infer<typeof branchSchema>;
 export type Skill = z.infer<typeof skillSchema>;
 export type Eligibility = z.infer<typeof eligibilitySchema>;
+
+export const partInputSchema = z.object({ sku: text(80), name: text(160), unit: text(40) }).strict();
+export const stockLocationInputSchema = z.object({ branchId: z.uuid(), name: text(120), kind: z.enum(['BRANCH', 'VAN']) }).strict();
+export const preparationInputSchema = z.object({ version: positiveVersion, plannedStart: instant, partsReviewed: z.boolean(), prerequisitesReviewed: z.boolean() }).strict();
+export const jobPartInputSchema = z.object({ version: positiveVersion, partId: z.uuid(), locationId: z.uuid(), quantity: z.string().regex(/^(?!0+(?:\.0+)?$)\d{1,9}(?:\.\d{1,3})?$/), state: z.enum(['SUSPECTED', 'REQUIRED', 'NOT_NEEDED']), reason: text(2000) }).strict();
+export const partConfirmationInputSchema = z.object({ version: positiveVersion, status: z.enum(['CONFIRMED', 'UNAVAILABLE', 'UNKNOWN']), note: text(2000) }).strict();
+export const prerequisiteInputSchema = z.object({ version: positiveVersion, code: z.string().trim().regex(/^[A-Z][A-Z0-9_]{1,59}$/), kind: z.enum(['SAFETY', 'ACCESS']), label: text(160), rationale: text(2000) }).strict();
+export const prerequisiteEvidenceInputSchema = z.object({ version: positiveVersion, status: z.enum(['PASS', 'FAIL', 'UNKNOWN']), note: text(2000) }).strict();
+export const warningInputSchema = z.object({ version: positiveVersion, code: text(160), reason: text(2000) }).strict();
+export const assignmentInputSchema = z.object({ version: positiveVersion, technicianId: z.uuid(), approvalReason: text(2000) }).strict();
+export const freshnessInputSchema = z.object({ policyVersion: positiveVersion, hours: z.number().int().min(1).max(168) }).strict();
+export const partSchema = partInputSchema.extend({ id: z.uuid() }).strip();
+export const stockLocationSchema = stockLocationInputSchema.extend({ id: z.uuid() }).strip();
+export const readinessCheckSchema = z.object({ code: z.string(), status: z.enum(['PASS', 'FAIL', 'UNKNOWN']), severity: z.enum(['BLOCKER', 'WARNING']), message: z.string(), evidenceId: z.string().nullable(), verifiedBy: z.string().nullable(), verifiedAt: z.iso.datetime().nullable(), acknowledged: z.boolean() });
+export const readinessSchema = z.object({ status: z.enum(['BLOCKED', 'NEEDS_REVIEW', 'READY']), jobVersion: positiveVersion, policyVersion: positiveVersion, evaluatedAt: z.iso.datetime(), plannedStart: z.iso.datetime().nullable(), checks: z.array(readinessCheckSchema), manualPartsNotice: z.string() });
+export const preparationSchema = z.object({ jobVersion: positiveVersion, plannedStart: z.iso.datetime().nullable(), partsReviewed: z.boolean(), prerequisitesReviewed: z.boolean(), partsFreshnessHours: z.number(), policyVersion: positiveVersion,
+  parts: z.array(z.object({ id: z.uuid(), partId: z.uuid(), locationId: z.uuid(), quantity: z.string(), state: z.enum(['SUSPECTED', 'REQUIRED', 'NOT_NEEDED']), reason: z.string(), revision: positiveVersion, part: partSchema, location: stockLocationSchema, latest: z.object({ status: z.string(), note: z.string(), confirmedAt: z.iso.datetime(), requirementRevision: z.number(), plannedStart: z.iso.datetime(), verifierName: z.string() }).nullable() })),
+  prerequisites: z.array(z.object({ id: z.uuid(), code: z.string(), kind: z.string(), label: z.string(), rationale: z.string(), latest: z.object({ status: z.string(), note: z.string(), verifiedAt: z.iso.datetime(), plannedStart: z.iso.datetime(), verifierName: z.string() }).nullable() })),
+});
+export const rankedCandidateSchema = eligibilitySchema.shape.candidates.element.extend({ score: z.number().nullable(), skillDepth: z.number(), workloadHeadroom: z.number(), assetFamiliarity: z.number(), bookedMinutes: z.number(), shiftMinutes: z.number(), resolvedVisits: z.number(), historyStatus: z.enum(['AVAILABLE', 'NO_HISTORY']), contributions: z.object({ skillDepth: z.number(), workloadHeadroom: z.number(), assetFamiliarity: z.number() }) });
+export const rankingSchema = z.object({ policyVersion: z.literal('dispatch-v2'), jobVersion: positiveVersion, evaluatedAt: z.iso.datetime(), readiness: readinessSchema, appointment: eligibilitySchema.shape.appointment, candidates: z.array(rankedCandidateSchema) });
+export const assignmentResultSchema = z.object({ assignmentId: z.uuid(), jobId: z.uuid(), jobVersion: positiveVersion, status: z.literal('ASSIGNED') });
+export const assignmentSchema = z.object({ id: z.uuid(), technicianId: z.uuid(), technicianName: z.string(), approvedByName: z.string(), approvedAt: z.iso.datetime(), approvalReason: z.string(), active: z.boolean(), reservedFrom: z.iso.datetime(), plannedStart: z.iso.datetime(), endsAt: z.iso.datetime() });
+export type Readiness = z.infer<typeof readinessSchema>;
+export type Preparation = z.infer<typeof preparationSchema>;
+export type Ranking = z.infer<typeof rankingSchema>;

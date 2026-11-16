@@ -14,6 +14,10 @@ model Organization {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
   active    Boolean  @default(true)
+  partsFreshnessHours Int @default(24) @map("parts_freshness_hours")
+  preparationPolicyVersion Int @default(1) @map("preparation_policy_version")
+  parts Part[]
+  stockLocations StockLocation[]
   memberships Membership[]
   sessions AuthSession[]
   invitations Invitation[]
@@ -61,6 +65,10 @@ model Membership {
   jobEvents JobEvent[]
   technician Technician?
   verifiedSkills TechnicianSkill[] @relation("SkillVerifier")
+  partConfirmations PartConfirmation[]
+  prerequisiteEvidence PrerequisiteEvidence[]
+  approvals Assignment[]
+  idempotencies IdempotencyRecord[]
   @@unique([organizationId, userId])
   @@unique([organizationId, id])
   @@map("memberships")
@@ -69,6 +77,8 @@ model Membership {
 enum JobStatus {
   DRAFT
   TRIAGED
+  READY
+  ASSIGNED
 }
 
 enum JobPriority {
@@ -141,6 +151,13 @@ model Job {
   siteId String @map("site_id") @db.Uuid
   equipmentId String @map("equipment_id") @db.Uuid
   complaint String
+  serviceCategory String @default("GENERAL_SERVICE") @map("service_category")
+  plannedStart DateTime? @map("planned_start") @db.Timestamptz(3)
+  visitRevision Int @default(1) @map("visit_revision")
+  partsReviewed Boolean @default(false) @map("parts_reviewed")
+  prerequisitesReviewed Boolean @default(false) @map("prerequisites_reviewed")
+  warningAcknowledgments Json @default("{}") @map("warning_acknowledgments")
+  readySnapshot Json? @map("ready_snapshot")
   priority JobPriority @default(NORMAL)
   status JobStatus @default(DRAFT)
   arrivalStart DateTime @map("arrival_start") @db.Timestamptz(3)
@@ -156,6 +173,9 @@ model Job {
   events JobEvent[]
   scheduling JobScheduling?
   reservations AppointmentReservation[]
+  partRequirements JobPart[]
+  prerequisites JobPrerequisite[]
+  assignments Assignment[]
   @@unique([organizationId, id])
   @@index([organizationId, createdAt, id])
   @@index([organizationId, status, priority])
@@ -240,6 +260,7 @@ model Branch {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   technicians Technician[]
   policies JobScheduling[]
+  stockLocations StockLocation[]
   @@unique([organizationId, id])
   @@unique([organizationId, nameKey])
   @@map("branches")
@@ -271,6 +292,7 @@ model Technician {
   skills TechnicianSkill[]
   availability Availability[]
   reservations AppointmentReservation[]
+  assignments Assignment[]
   @@unique([organizationId, id])
   @@unique([organizationId, membershipId])
   @@map("technicians")
@@ -350,6 +372,166 @@ model AppointmentReservation {
   endsAt DateTime @map("ends_at") @db.Timestamptz(3)
   technician Technician @relation(fields: [organizationId, technicianId], references: [organizationId, id], onDelete: Restrict)
   job Job @relation(fields: [organizationId, jobId], references: [organizationId, id], onDelete: Restrict)
+  assignment Assignment?
+  @@unique([organizationId, jobId, technicianId, id])
   @@index([organizationId, technicianId, reservedFrom])
   @@map("appointment_reservations")
+}
+
+enum PartRequirementState {
+  SUSPECTED
+  REQUIRED
+  NOT_NEEDED
+}
+
+enum EvidenceStatus {
+  CONFIRMED
+  UNAVAILABLE
+  UNKNOWN
+}
+
+model Part {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  sku String
+  name String
+  unit String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  requirements JobPart[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, sku])
+  @@map("parts")
+}
+
+model StockLocation {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  branchId String @map("branch_id") @db.Uuid
+  name String
+  kind String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  branch Branch @relation(fields: [organizationId, branchId], references: [organizationId, id], onDelete: Restrict)
+  requirements JobPart[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, branchId, name])
+  @@map("stock_locations")
+}
+
+model JobPart {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  jobId String @map("job_id") @db.Uuid
+  partId String @map("part_id") @db.Uuid
+  locationId String @map("location_id") @db.Uuid
+  quantity Decimal @db.Decimal(12,3)
+  state PartRequirementState
+  reason String
+  revision Int @default(1)
+  job Job @relation(fields: [organizationId, jobId], references: [organizationId, id], onDelete: Restrict)
+  part Part @relation(fields: [organizationId, partId], references: [organizationId, id], onDelete: Restrict)
+  location StockLocation @relation(fields: [organizationId, locationId], references: [organizationId, id], onDelete: Restrict)
+  confirmations PartConfirmation[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, jobId, partId, locationId])
+  @@map("job_parts")
+}
+
+model PartConfirmation {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  jobPartId String @map("job_part_id") @db.Uuid
+  recordedJobVersion Int @map("recorded_job_version")
+  requirementRevision Int @map("requirement_revision")
+  visitRevision Int @map("visit_revision")
+  plannedStart DateTime @map("planned_start") @db.Timestamptz(3)
+  status EvidenceStatus
+  note String
+  confirmedAt DateTime @default(now()) @map("confirmed_at") @db.Timestamptz(3)
+  confirmedByMembershipId String @map("confirmed_by_membership_id") @db.Uuid
+  requirement JobPart @relation(fields: [organizationId, jobPartId], references: [organizationId, id], onDelete: Restrict)
+  actor Membership @relation(fields: [organizationId, confirmedByMembershipId], references: [organizationId, id], onDelete: Restrict)
+  @@index([organizationId, jobPartId, confirmedAt, id])
+  @@map("part_confirmations")
+}
+
+model JobPrerequisite {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  jobId String @map("job_id") @db.Uuid
+  code String
+  kind String
+  label String
+  rationale String
+  job Job @relation(fields: [organizationId, jobId], references: [organizationId, id], onDelete: Restrict)
+  evidence PrerequisiteEvidence[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, jobId, code])
+  @@map("job_prerequisites")
+}
+
+model PrerequisiteEvidence {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  prerequisiteId String @map("prerequisite_id") @db.Uuid
+  recordedJobVersion Int @map("recorded_job_version")
+  visitRevision Int @map("visit_revision")
+  plannedStart DateTime @map("planned_start") @db.Timestamptz(3)
+  status String
+  note String
+  verifiedAt DateTime @default(now()) @map("verified_at") @db.Timestamptz(3)
+  verifiedByMembershipId String @map("verified_by_membership_id") @db.Uuid
+  prerequisite JobPrerequisite @relation(fields: [organizationId, prerequisiteId], references: [organizationId, id], onDelete: Restrict)
+  actor Membership @relation(fields: [organizationId, verifiedByMembershipId], references: [organizationId, id], onDelete: Restrict)
+  @@index([organizationId, prerequisiteId, verifiedAt, id])
+  @@map("prerequisite_evidence")
+}
+
+model Assignment {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  jobId String @map("job_id") @db.Uuid
+  technicianId String @map("technician_id") @db.Uuid
+  reservationId String @unique @map("reservation_id") @db.Uuid
+  approvedByMembershipId String @map("approved_by_membership_id") @db.Uuid
+  approvedAt DateTime @default(now()) @map("approved_at") @db.Timestamptz(3)
+  readinessSnapshot Json @map("readiness_snapshot")
+  rankingSnapshot Json @map("ranking_snapshot")
+  approvalReason String @map("approval_reason")
+  active Boolean @default(true)
+  resolvedAt DateTime? @map("resolved_at") @db.Timestamptz(3)
+  job Job @relation(fields: [organizationId, jobId], references: [organizationId, id], onDelete: Restrict)
+  technician Technician @relation(fields: [organizationId, technicianId], references: [organizationId, id], onDelete: Restrict)
+  reservation AppointmentReservation @relation(fields: [organizationId, jobId, technicianId, reservationId], references: [organizationId, jobId, technicianId, id], onDelete: Restrict)
+  approver Membership @relation(fields: [organizationId, approvedByMembershipId], references: [organizationId, id], onDelete: Restrict)
+  outbox OutboxEvent[]
+  @@unique([organizationId, id])
+  @@unique([organizationId, jobId, technicianId, reservationId])
+  @@index([organizationId, technicianId, resolvedAt])
+  @@map("assignments")
+}
+
+model IdempotencyRecord {
+  organizationId String @map("organization_id") @db.Uuid
+  key String @db.VarChar(100)
+  requestHash String @map("request_hash")
+  actorMembershipId String @map("actor_membership_id") @db.Uuid
+  response Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  actor Membership @relation(fields: [organizationId, actorMembershipId], references: [organizationId, id], onDelete: Restrict)
+  @@id([organizationId, key])
+  @@map("idempotency_records")
+}
+
+model OutboxEvent {
+  id String @id @default(uuid()) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  assignmentId String @map("assignment_id") @db.Uuid
+  kind String
+  payload Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  publishedAt DateTime? @map("published_at") @db.Timestamptz(3)
+  assignment Assignment @relation(fields: [organizationId, assignmentId], references: [organizationId, id], onDelete: Restrict)
+  @@unique([organizationId, assignmentId, kind])
+  @@index([publishedAt, createdAt])
+  @@map("outbox_events")
 }

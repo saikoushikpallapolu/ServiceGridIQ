@@ -1,6 +1,6 @@
 import { Router, type RequestHandler } from 'express';
 import { z } from 'zod';
-import type { PrismaClient, Prisma, Membership } from '@prisma/client';
+import { Prisma, type PrismaClient, type Membership } from '@prisma/client';
 import { branchInputSchema, skillInputSchema, technicianInputSchema, technicianUpdateSchema, verifiedSkillInputSchema, availabilityInputSchema, schedulingInputSchema, eligibilityInputSchema } from '@servicegrid/contracts';
 import { context } from '../auth/context.js';
 import { reject } from '../auth/errors.js';
@@ -79,7 +79,8 @@ export function createSchedulingRouter(db: PrismaClient, csrf: RequestHandler) {
       await lockTechnician(tx, actor.organizationId, id);
       const tech = await tx.technician.findUniqueOrThrow({ where: { id } }); if (tech.version !== input.version) return reject(409, 'VERSION_CONFLICT', 'Technician changed. Reload before verifying');
       if (!await tx.skill.findUnique({ where: { organizationId_id: { organizationId: actor.organizationId, id: skillId } } })) return reject(404, 'NOT_FOUND', 'Skill not found');
-      if (await tx.appointmentReservation.count({ where: { organizationId: actor.organizationId, technicianId: id, active: true, endsAt: { gt: new Date() } } })) return reject(409, 'ACTIVE_RESERVATIONS', 'Release future reservations before changing qualifications');
+      const future = await tx.appointmentReservation.findMany({ where: { organizationId: actor.organizationId, technicianId: id, active: true, endsAt: { gt: new Date() } }, include: { job: { include: { scheduling: { include: { requirements: { where: { skillId } } } } } } } });
+      if (future.some((booking) => booking.job.scheduling?.requirements.some((required) => !input.active || input.level < required.level || (!!input.expiresAt && (new Date(input.expiresAt) <= new Date() || new Date(input.expiresAt) < booking.endsAt))))) return reject(409, 'ACTIVE_RESERVATIONS', 'This qualification change would invalidate an active reservation');
       const { version: _version, ...fields } = input; void _version;
       await tx.technicianSkill.upsert({ where: { organizationId_technicianId_skillId: { organizationId: actor.organizationId, technicianId: id, skillId } }, create: { ...fields, organizationId: actor.organizationId, technicianId: id, skillId, verifiedByMembershipId: actor.id }, update: { ...fields, verifiedByMembershipId: actor.id, verifiedAt: new Date() } });
       const updated = await tx.technician.update({ where: { id }, data: { version: { increment: 1 } } }); await audit(tx, actor, 'TECHNICIAN_SKILL_VERIFIED', id, { skillId, active: input.active, level: input.level, expiresAt: input.expiresAt, evidence: input.evidence, version: updated.version }); return { version: updated.version };
@@ -129,7 +130,7 @@ export function createSchedulingRouter(db: PrismaClient, csrf: RequestHandler) {
       const policy = await tx.jobScheduling.upsert({ where: { organizationId_jobId: { organizationId, jobId } }, create: { organizationId, jobId, ...fields }, update: fields });
       await tx.jobSkillRequirement.deleteMany({ where: { organizationId, schedulingId: policy.id } });
       await tx.jobSkillRequirement.createMany({ data: input.requirements.map((item) => ({ ...item, organizationId, schedulingId: policy.id })) });
-      const updated = await tx.job.update({ where: { id: jobId }, data: { version: { increment: 1 } } });
+      const updated = await tx.job.update({ where: { id: jobId }, data: { version: { increment: 1 }, status: job.status === 'READY' ? 'TRIAGED' : job.status, readySnapshot: Prisma.DbNull, warningAcknowledgments: {} } });
       await tx.jobEvent.create({ data: { organizationId, jobId, actorMembershipId: actor.id, kind: 'SCHEDULING_POLICY_UPDATED', note: input.generalInspection ? 'General inspection explicitly selected; branch policy updated.' : 'Required skills and branch policy updated.', details: { version: updated.version } } });
       await audit(tx, actor, 'SCHEDULING_POLICY_UPDATED', jobId, { version: updated.version, ...fields, requirements: input.requirements }); return { jobVersion: updated.version };
     }));

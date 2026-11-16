@@ -30,7 +30,7 @@ The fourth migration adds scheduling tables and PostgreSQL exclusion constraints
 - A job can explicitly permit another company branch. This never grants access to another company's technician records.
 - Changed requirements increment the job version. Stale policy/profile/availability changes fail with a reload instruction. Job-level previews refresh only when requested; they are never assignments.
 
-There is intentionally no public booking button yet. Phase 5 adds readiness and manager-approved assignment using the tested reservation foundation. No SQL insertion is needed to test the normal Phase 4 UI.
+This Phase 4 walkthrough describes the eligibility foundation. Phase 5 now adds the public readiness and approved-assignment workflow; follow the [current walkthrough](phase-5-local.md) for booking. No SQL insertion is needed to test the normal Phase 4 UI.
 
 ## Checks
 
