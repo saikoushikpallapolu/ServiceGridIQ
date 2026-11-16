@@ -1,0 +1,48 @@
+name: servicegrid-staging
+services:
+  db:
+    image: postgres:17.7-alpine
+    environment:
+      POSTGRES_USER: servicegrid
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Required}
+      POSTGRES_DB: servicegrid
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U servicegrid -d servicegrid']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    image: ${API_IMAGE:?Required}
+    command: [pnpm, --filter, '@servicegrid/api', 'db:migrate']
+    environment:
+      DATABASE_URL: postgresql://servicegrid:${POSTGRES_PASSWORD}@db:5432/servicegrid
+    depends_on:
+      db: { condition: service_healthy }
+  api:
+    image: ${API_IMAGE:?Required}
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://servicegrid:${POSTGRES_PASSWORD}@db:5432/servicegrid
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: [CMD, node, '-e', "fetch('http://127.0.0.1:3001/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+  web:
+    image: ${WEB_IMAGE:?Required}
+    ports: ['127.0.0.1:8080:8080']
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test: [CMD, wget, '-q', '--spider', 'http://127.0.0.1:8080/']
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    restart: unless-stopped
+volumes:
+  postgres_data:

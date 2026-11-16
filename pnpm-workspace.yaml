@@ -1,0 +1,8 @@
+packages:
+  - apps/web
+  - apps/api
+  - packages/contracts
+allowBuilds:
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true

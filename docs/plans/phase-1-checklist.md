@@ -12,40 +12,44 @@
 - [x] Add ignore rules and editor settings.
 - [x] Add document-validation script and CI workflow definition.
 
-The checklist above describes files present in the repository. A workflow definition is not evidence of a successful GitHub Actions run.
+See [verification evidence](../operations/phase-1-verification.md) for executed local checks. AWS provisioning and deployment remain pending account setup and cost approval.
 
 ## Decisions before implementation
 
-- [ ] Select and pin supported Node.js and package-manager versions.
-- [ ] Record the workspace/package strategy and lockfile policy.
-- [ ] Confirm the PostgreSQL version and Prisma migration approach.
-- [ ] Select the managed identity provider for Phase 2.
+- [x] Select and pin supported Node.js and package-manager versions.
+- [x] Record the workspace/package strategy and lockfile policy.
+- [x] Confirm the PostgreSQL version and Prisma migration approach.
+- [ ] Select the managed identity provider during Phase 2; explicitly deferred in the accepted foundation decisions.
 - [ ] Select staging hosting, container registry, database location, region, and budget.
-- [ ] Decide licensing before external contributions or distribution.
+- [x] Decide licensing before external contributions or distribution.
 
 ## Foundation tasks
 
-- [ ] Building workspace manifests for the frontend, API, and shared contracts.
-- [ ] Building the React, TypeScript, and Vite frontend foundation.
-- [ ] Building the Express and TypeScript API with Zod validation and consistent errors.
-- [ ] Building liveness and dependency-aware readiness endpoints.
-- [ ] Building structured logging with correlation IDs and safe error handling.
-- [ ] Building PostgreSQL local services using Docker Compose.
-- [ ] Building the first reviewed migration and fictional seed data.
-- [ ] Building placeholder-only environment examples and documented setup commands.
-- [ ] Building versioned frontend and API containers.
-- [ ] Building application CI for type checks, lint, focused tests, and builds.
+- [x] Building workspace manifests for the frontend, API, and shared contracts.
+- [x] Building the React, TypeScript, and Vite frontend foundation.
+- [x] Building the Express and TypeScript API with Zod validation and consistent errors.
+- [x] Building liveness and dependency-aware readiness endpoints.
+- [x] Building structured logging with correlation IDs and safe error handling.
+- [x] Building PostgreSQL local services using Docker Compose.
+- [x] Building the first reviewed migration and fictional seed data.
+- [x] Building placeholder-only environment examples and documented setup commands.
+- [x] Building versioned frontend and API containers.
+- [x] Building application CI for type checks, lint, focused tests, and builds.
 - [ ] Deploying the initial application to staging and verifying database connectivity.
-- [ ] Documenting actual local start, stop, migration, seed, build, and verification commands.
+- [x] Documenting actual local start, stop, migration, seed, build, and verification commands.
 
 Do not build workers, Redis ingestion, RAG, inventory reservations, or business-feature screens in this phase. Customer discovery can proceed alongside setup.
 
 ## Completion evidence
 
 - [ ] Record a successful clean-clone setup.
-- [ ] Record application check commands and their results.
+- [x] Record application check commands and their results.
 - [ ] Link the successful CI run.
 - [ ] Record the staging URL and deployed commit without exposing credentials.
-- [ ] Verify readiness correctly reports database unavailability.
-- [ ] Confirm no secrets or private client records are tracked.
-- [ ] Update the README to distinguish implemented foundation from planned features.
+- [x] Verify readiness correctly reports database unavailability.
+- [x] Confirm no secrets or private client records are tracked.
+- [x] Update the README to distinguish implemented foundation from planned features.
+
+## Accepted setup decisions
+
+See [Phase 1 decisions](../architecture/0001-phase-1-foundation.md), [local setup](../operations/local-development.md), and [AWS account and staging guide](../operations/aws-staging.md). The project owner approved the baseline stack, AWS staging for learning, and MIT licensing. Local setup does not depend on AWS account creation.

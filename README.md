@@ -4,7 +4,7 @@
 
 ServiceGrid IQ is a planned field-service preparation tool that helps dispatchers identify missing job information, check technician eligibility, confirm required-part readiness, and approve assignments with clear explanations. Technicians will receive preparation cards and record visit outcomes, including linked follow-ups.
 
-**Status: planning and repository setup complete. Phase 1 implementation is next.** This repository currently contains specifications and a directory scaffold. It does not yet contain a running application, a deployed service, or validated customer results.
+**Status: Phase 1 local foundation implemented; AWS staging awaits account setup and budget approval.** The React frontend, Express API, shared contracts, PostgreSQL migration, fictional seeds, and Docker configuration are implemented. Business features and authentication remain planned. No customer outcome claims are made.
 
 ## The problem we are testing
 
@@ -34,7 +34,7 @@ The pilot uses **timestamped manual parts confirmation**, not protected stock re
 | [Documentation index](docs/README.md) | Reading order and source-of-truth rules |
 | [Original blueprint v1 — archived PDF](docs/archive/ServiceGrid_IQ_Product_and_Engineering_Blueprint.pdf) | Historical reference; v2 supersedes it for new implementation decisions |
 
-## Planned stack
+## Stack
 
 | Area | Baseline |
 | --- | --- |
@@ -46,18 +46,18 @@ The pilot uses **timestamped manual parts confirmation**, not protected stock re
 | Later asynchronous work | Redis and BullMQ when document ingestion or sustained background tasks require them |
 | Later document knowledge | Private S3-compatible storage, pgvector, PostgreSQL full-text search, provider adapters |
 
-Runtime versions, package-manager selection, authentication provider, and hosting target will be recorded during Phase 1. No dependencies have been installed yet.
+Node.js 24.19.0 and pnpm 11.25.0 are pinned. Prisma 7.10.1 and PostgreSQL 17 are used with a committed lockfile. See [Phase 1 decisions](docs/architecture/0001-phase-1-foundation.md). Authentication is Phase 2. AWS staging is prepared but has not been provisioned.
 
 ## Repository layout
 
 ```text
 apps/
-  web/                  # Planned manager and technician interface
-  api/                  # Planned modular backend
+  web/                  # React foundation; manager and technician features planned
+  api/                  # Express health API; business modules planned
   worker/               # Reserved for later asynchronous processing
 packages/
-  contracts/            # Planned shared validation and API contracts
-infrastructure/         # Planned Compose, deployment, and monitoring configuration
+  contracts/            # Shared runtime schemas and TypeScript types
+infrastructure/         # Local Compose and prepared AWS staging configuration
 docs/
   architecture/         # Current product and engineering blueprint
   api/                  # Pilot OpenAPI contract
@@ -65,23 +65,30 @@ docs/
   operations/           # Deployment and recovery documentation as implemented
   security/             # Security boundaries and future threat model
   archive/              # Superseded source documents
-scripts/                # Repository documentation checks
-.github/workflows/      # Documentation checks; application CI comes in Phase 1
+scripts/                # Setup, smoke, documentation and deployment helpers
+.github/workflows/      # Documentation, application CI and manual AWS release
 ```
 
-The application and infrastructure directories are placeholders. They do not indicate implemented features.
+The web, API, contracts, local Compose stack, and AWS staging configuration now contain implementation. The worker directory remains reserved for a later phase.
 
 ## Getting started
 
 ```sh
 git clone https://github.com/saikoushikpallapolu/ServiceGridIQ.git
 cd ServiceGridIQ
-node scripts/check-docs.mjs
+npm install --global pnpm@11.25.0
+pnpm install --frozen-lockfile
+pnpm setup:env
+pnpm db:generate
+docker compose --env-file .env -f infrastructure/compose.yaml up -d --build --wait --wait-timeout 180
+pnpm smoke
 ```
+
+Open [http://localhost:8080](http://localhost:8080). Docker Desktop must be running. See [local development](docs/operations/local-development.md) for hot reload, seeds, tests, logs, and safe shutdown. See [AWS setup for beginners](docs/operations/aws-staging.md) for account and staging steps. The current screen reports actual API/database health; it is not a dispatch dashboard.
 
 The documentation check requires Node.js 22 or later and no package installation. It checks required files, local Markdown links, JSON parsing, local OpenAPI references, and operation IDs. It is not a full OpenAPI validator or application test suite.
 
-Next, follow the [Phase 1 checklist](docs/plans/phase-1-checklist.md). Application start, migration, and container commands will be documented when they exist and have been run successfully.
+Track remaining deployment evidence in the [Phase 1 checklist](docs/plans/phase-1-checklist.md). CI builds, checks types/lint, runs unit and PostgreSQL integration tests, and smoke-tests the Docker stack. AWS release is a separate manual workflow requiring account configuration and approval.
 
 ## Delivery plan
 
@@ -113,4 +120,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the implementation workflow.
 
 ## Licensing
 
-A software license has not yet been selected. Public repository visibility does not by itself grant an open-source license. Resolve the licensing choice before accepting external code contributions or distributing the application.
+This project is licensed under the [MIT License](LICENSE), as selected by the owner. It permits commercial reuse and redistribution under its terms. Proprietary customer data and third-party manuals are not licensed by this repository.

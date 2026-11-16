@@ -30,3 +30,9 @@ Desktop.ini
 postgres-data/
 redis-data/
 minio-data/
+
+# AWS local deployment state and parameter files
+infrastructure/aws/.env*
+!infrastructure/aws/.env.example
+*.tfstate
+*.tfstate.*

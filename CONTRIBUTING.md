@@ -1,6 +1,6 @@
 # Contributing
 
-Implementation has not started. Read the [current blueprint](docs/architecture/ServiceGrid_IQ_Build_Blueprint_v2.md), [build plan](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md), and [Phase 1 checklist](docs/plans/phase-1-checklist.md) before changing application scope.
+Phase 1 local implementation is underway; authentication and business functionality remain later phases. Read the [current blueprint](docs/architecture/ServiceGrid_IQ_Build_Blueprint_v2.md), [build plan](docs/plans/ServiceGrid_IQ_Phase_Wise_Build_Plan.md), and [Phase 1 checklist](docs/plans/phase-1-checklist.md) before changing application scope.
 
 ## Workflow
 
@@ -19,10 +19,10 @@ Use a branch such as `feat/phase-1-foundation` for implementation. Do not introd
 node scripts/check-docs.mjs
 ```
 
-Application build and test commands do not exist yet. Phase 1 will establish them and add application CI gates. Passing the documentation check does not mean application requirements have been implemented.
+Run `pnpm build`, `pnpm typecheck`, `pnpm lint` and `pnpm test`. PostgreSQL integration checks require migration and seed; see docs/operations/local-development.md. Passing the documentation check does not mean application requirements have been implemented.
 
 ## Sensitive data and licensing
 
 Never commit credentials, private client data, proprietary manuals, production exports, or database backups. Environment examples contain placeholders only. Confirm document rights before ingestion.
 
-No software license has been selected. Resolve licensing and contribution terms before accepting external code contributions.
+The owner selected the MIT license. Contributions must be compatible with LICENSE; never contribute material you do not have rights to distribute.

@@ -15,4 +15,4 @@ Markdown files are editable document sources. Refresh their PDF companions and i
 
 ## Status
 
-This repository contains planning artifacts and placeholders. Database migrations, application code, deployment configuration, recovery procedures, and application test evidence will be added as implemented. The OpenAPI file is a contract, not a running API.
+The repository now includes the Phase 1 frontend, health API, PostgreSQL foundation migration and seeds, local Docker services, CI, and AWS staging templates. Authentication and the pilot business APIs are not implemented. The pilot OpenAPI file remains a future contract; it does not describe the Phase 1 health-only service. See [local setup](operations/local-development.md), [AWS setup](operations/aws-staging.md), and [accepted decisions](architecture/0001-phase-1-foundation.md).
