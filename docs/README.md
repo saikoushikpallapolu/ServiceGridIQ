@@ -40,3 +40,5 @@ Phase 10 adds the [protected stock ledger and consumption walkthrough](operation
 The [frontend design record](design/frontend-redesign.md) describes the public website, blue design system, role-aware navigation, accessibility behavior and original image provenance.
 
 The [hosted release roadmap](operations/launch-roadmap.md) records the free-only Mumbai account setup path, staging audit, secrets and hosted-test gates, real GitHub deployments, demo recording and discovery sequence.
+
+The [Render and Vercel deployment assessment](operations/render-readiness.md) covers free-tier gaps, same-origin API routing, genuine GitHub deployment checkmarks and the hosted scenario acceptance matrix. No deployment is claimed by that plan.
