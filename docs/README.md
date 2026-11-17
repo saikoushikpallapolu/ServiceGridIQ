@@ -38,3 +38,5 @@ Phase 9 adds [private manual ingestion and cited preparation](operations/phase-9
 Phase 10 adds the [protected stock ledger and consumption walkthrough](operations/phase-10-local.md), [implemented stock API contract](api/phase-10-openapi.json) and [verification record](plans/phase-10-checklist.md). It extends the manual pilot with optional protected allocations; no live vendor integration is claimed.
 
 The [frontend design record](design/frontend-redesign.md) describes the public website, blue design system, role-aware navigation, accessibility behavior and original image provenance.
+
+The [hosted release roadmap](operations/launch-roadmap.md) records the free-only Mumbai account setup path, staging audit, secrets and hosted-test gates, real GitHub deployments, demo recording and discovery sequence.

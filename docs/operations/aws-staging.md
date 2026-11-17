@@ -1,5 +1,7 @@
 # AWS staging setup for a first time AWS user
 
+> **Current free-only path (2026-11-17):** Follow the [hosted release roadmap](launch-roadmap.md) first. The user selected Mumbai and has not authorized out-of-pocket spending. Do not create/join AWS Organizations for Identity Center under this constraint: AWS documents that joining Organizations can upgrade a Free account plan to Paid. The older SSO/account instructions below require that plan check first. The existing staging Compose file is foundation-only and lacks the worker, Redis, storage and auth configuration needed for a full-product deployment.
+
 ## Current boundary
 
 The repository includes a CloudFormation template and a manual GitHub Actions release workflow. No AWS resources have been provisioned, no cost estimate has been approved, and no cloud deployment has been verified. Local implementation can proceed independently. Staging remains an open Phase 1 completion item until it is actually deployed and checked.
